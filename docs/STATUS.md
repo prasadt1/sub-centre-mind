@@ -1,8 +1,8 @@
 # Sub-Centre Mind — Status Report
 
-**Date**: May 2, 2026  
-**Hours logged**: 1.5 hrs  
-**Gate 1 status**: ⚠️ BLOCKED
+**Date**: May 2, 2026, 17:50 CET  
+**Hours logged**: 2.5 hrs  
+**Gate 1 status**: 🚫 CRITICAL BLOCKER
 
 ---
 
@@ -22,27 +22,35 @@
 
 ---
 
+## Completed Since Last Update ✅
+
+- [x] Updated Ollama (0.18.3 → 0.22.1)
+- [x] Re-pulled Gemma 4 model (9.6 GB)
+- [x] Created smoke test script (`scripts/smoke_test.py`)
+- [x] Tested API connectivity (simple queries work)
+
 ## Blocked 🚫
 
-### Critical Blocker: Ollama Version Mismatch
+### Critical Blocker: Gemma 4 Thinking Mode
 
-**Issue**: Gemma 4 model requires newer Ollama version than currently installed
+**Issue**: Gemma 4 E4B has "thinking" mode enabled, causing extreme latency and empty responses
 
 **Details**:
-- Current Ollama version: `0.18.3`
-- Error when running `ollama run gemma4:latest`: `500 Internal Server Error: unable to load model`
-- Error when pulling: `412: The model you are attempting to pull requires a newer version of Ollama`
+- Model shows "Thinking..." and generates internal reasoning (20+ seconds)
+- API returns empty `response` field, only `context` tokens
+- Simple query "What is IFA?" takes >20s (Gate 1 target: <12s)
+- Cannot disable thinking mode via API options
 
-**Impact**: Cannot run smoke test or any Gemma 4 queries → Gate 1 at risk
+**Impact**: **FAILS Gate 1 latency requirement** (<12s per query)
 
-**Mitigation**:
-1. **Immediate**: Update Ollama to latest version from https://ollama.com/download
-2. **Verify**: Run `ollama --version` to confirm update
-3. **Re-pull**: `ollama pull gemma4:latest` to get compatible model
-4. **Test**: `ollama run gemma4:latest "IFA tablet dose for pregnant women per MoHFW?"`
+**Recommended Solution**: Switch to `gemma2:9b` (standard Gemma 2, no thinking mode)
+- Proven fast inference (<5s typical)
+- Supports function calling
+- Larger model (9B vs 8B) = better quality
+- See `docs/GATE1-BLOCKER.md` for full analysis
 
 **Owner**: Prasad  
-**Deadline**: May 3, 09:00 CET (before RAG pipeline work)
+**Decision deadline**: May 2, 22:00 CET (before no-coding cutoff)
 
 ---
 
