@@ -17,3 +17,12 @@ data/health-corpus/**/*.jpeg
 data/health-corpus/**/*.mp3
 data/health-corpus/**/*.wav
 data/health-corpus/**/*.m4a
+
+# Internal documentation (not for public repo)
+docs/GATE1-BLOCKER.md
+docs/GATE1-SOLUTION.md
+docs/HANDOFF-CLI.md
+docs/NEXT.md
+docs/OLLAMA-UPDATE.md
+docs/SESSION-SUMMARY.md
+docs/STATUS.md
