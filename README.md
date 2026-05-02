@@ -1,0 +1,160 @@
+# Sub-Centre Mind
+
+**Local-first clinical decision support for India's ANMs, powered by Gemma 4 E4B**
+
+[![Hackathon](https://img.shields.io/badge/Gemma%204%20Good-Health%20%26%20Sciences-blue)](https://www.kaggle.com/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Model](https://img.shields.io/badge/model-Gemma%204%20E4B-orange)](https://ollama.com/)
+
+## Overview
+
+Sub-Centre Mind is a clinical decision support tool designed for Auxiliary Nurse Midwives (ANMs) managing 5,000+ patients across India's rural sub-centres. It runs **entirely offline** using Gemma 4 E4B via Ollama, ensuring patient health information (PHI) never leaves the device.
+
+### Core Capabilities
+
+- **Protocol-grounded Q&A**: Answers questions about IFA dosing, ANC schedules, immunization protocols using RAG over MoHFW/WHO guidelines
+- **Safe refusal boundaries**: Refuses diagnostic queries (BP interpretation, insulin dosing, bleeding assessment) and escalates to named Medical Officers
+- **Closed-loop nudges**: WhatsApp reminders for IFA compliance and ANC visits, with confirmation tracking ("ली" = taken)
+- **Multilingual**: Hindi, Marathi, English support
+
+## Engineering Lineage
+
+Direct fork of **AgriNexus AI** (AWS Builder 10K AIdeas Innovation Award, April 2026) — reuses the closed-loop nudge state machine, adapted from agricultural advisories to maternal health protocols.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    ANM (User)                       │
+└─────────────────┬───────────────────────────────────┘
+                  │
+                  ▼
+         ┌────────────────────┐
+         │   Query Router     │
+         │  (boundary_card)   │
+         └────────┬───────────┘
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+        ▼                   ▼
+┌──────────────┐    ┌──────────────────┐
+│  RAG Engine  │    │ Refusal Handler  │
+│ (MoHFW PDFs) │    │  + Escalation    │
+└──────┬───────┘    └──────────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│   Gemma 4 E4B        │
+│   (Ollama local)     │
+└──────────────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│  Nudge Engine        │
+│  (WhatsApp loop)     │
+└──────────────────────┘
+```
+
+## Decision Boundary Card
+
+The **Decision Boundary Card** (`boundary_card.json`) is the machine-readable specification of what the model answers, refuses, and escalates. This is the primary artifact for hackathon evaluation.
+
+**v0.1 Requirements**:
+- ≥15 answerable queries (IFA, ANC, immunization protocols)
+- ≥15 refusal triggers (diagnostic overreach, prescriptive queries)
+
+## Gate 1 Criteria (May 5, 18:00 CET)
+
+Must pass ALL 4:
+
+1. ✅ Function calling returns valid JSON with `refuse_and_escalate` tool call
+2. ✅ 5/5 refusals trigger correctly (BP, insulin, bleeding, metformin, TB diagnosis)
+3. ✅ Multilingual RAG: Hindi + Marathi queries return relevant chunks (>0.7 similarity)
+4. ✅ Latency ≤12s per query
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- [Ollama](https://ollama.com/) installed
+- Gemma 4 E4B model: `ollama pull gemma4:latest`
+
+### Installation
+
+```bash
+# Clone repository
+git clone <repo-url>
+cd sub-centre-mind
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Verify Gemma 4 is available
+ollama list | grep gemma4
+```
+
+### Smoke Test
+
+```bash
+ollama run gemma4:latest "IFA tablet dose for pregnant women per MoHFW?"
+```
+
+Expected: Response about 180 tablets (1 daily for 180 days post-conception).
+
+### Run RAG Pipeline
+
+```bash
+python src/rag/ingest.py  # Index MoHFW PDFs
+python src/rag/query.py "गर्भवती महिलांसाठी IFA डोस काय आहे?"  # Marathi query
+```
+
+### Run Refusal Tests
+
+```bash
+pytest tests/test_refusal.py -v
+```
+
+## Project Structure
+
+```
+sub-centre-mind/
+├── src/
+│   ├── rag/              # RAG pipeline (ingest, query, retrieval)
+│   └── nudges/           # WhatsApp nudge engine
+├── data/
+│   └── health-corpus/    # MoHFW/WHO PDFs
+├── tests/                # Pytest suite
+├── docs/
+│   ├── NEXT.md          # Build checklist
+│   └── HANDOFF-CLI.md   # Claude Code bootstrap
+├── scripts/              # Utility scripts
+├── boundary_card.json    # Decision Boundary Card
+└── requirements.txt
+```
+
+## Hard Constraints
+
+- **Gemma 4 E4B via Ollama ONLY** — no Bedrock/OpenAI/Claude in inference path
+- **No vision in v1** — text-only queries
+- **PHI never leaves device** — all processing local
+- **Health & Sciences track only**
+
+## Roadmap
+
+See [docs/NEXT.md](docs/NEXT.md) for the full 25-task build checklist across 4 phases.
+
+## License
+
+MIT License - see [LICENSE](LICENSE)
+
+## Author
+
+**Prasad Tilloo** ([@prasadt1](https://github.com/prasadt1))  
+AWS Builder 10K AIdeas Innovation Award Winner (April 2026) — AgriNexus AI
+
+## Acknowledgments
+
+- **Gemma 4 Good Hackathon** — Kaggle/Google DeepMind
+- **AgriNexus AI** — engineering foundation for closed-loop nudge system
+- **MoHFW** — maternal health protocols and guidelines
