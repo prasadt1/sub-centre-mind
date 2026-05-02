@@ -4,6 +4,7 @@
 # Vector store and embeddings
 faiss-cpu==1.7.4
 sentence-transformers==2.2.2
+huggingface_hub==0.13.4
 
 # LangChain for RAG pipeline
 langchain==0.1.0

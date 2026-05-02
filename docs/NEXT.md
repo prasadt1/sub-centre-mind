@@ -19,7 +19,7 @@
 ### Smoke Tests
 - [ ] Ollama connectivity: `ollama list | grep gemma4`
 - [ ] Basic query: "IFA tablet dose for pregnant women per MoHFW?"
-- [ ] Function calling: verify JSON schema with `refuse_and_escalate` tool
+- [ ] Function calling: verify tool calling via **/api/chat** (`scripts/g1_checks.sh`)
 
 ### Decision Boundary Card v0.1
 - [ ] 15+ answerable queries (IFA, ANC, immunization, nutrition)

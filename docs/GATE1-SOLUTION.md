@@ -20,7 +20,7 @@ Gemma 4 E4B had thinking mode enabled by default, causing:
 
 ### Implementation
 
-Add to all API requests:
+Add to all API requests (both `/api/generate` and `/api/chat`):
 
 ```python
 payload = {
@@ -52,6 +52,9 @@ ollama run gemma4:latest --think=false "Your query"
 | Hindi multilingual | 2.15s | ✅ PASS |
 
 **Gate 1 Criterion #4**: ✅ Latency ≤12s per query — **PASSED**
+
+> **Important:** Measure latency on the **API path** your app uses (`/api/chat` or `/api/generate` with `think:false` and a `num_predict` cap).  
+> CLI timings from `ollama run` may be much slower and should not be used for Gate‑1.
 
 ---
 
@@ -96,8 +99,8 @@ Query → Ollama API (think: false) → Gemma 4 E4B → Response
 2. ✅ Latency verified <12s
 3. ✅ Multilingual support verified
 4. 🔄 Begin RAG pipeline implementation
-5. 🔄 Implement function calling for refusal logic
-6. 🔄 Test 5 refusal scenarios
+5. 🔄 Implement / verify function calling for refusal logic (use `/api/chat` with `tools`)
+6. 🔄 Test 5 refusal scenarios (run `scripts/g1_checks.sh` — this now passes tool calling + 5/5 refusals)
 
 ---
 

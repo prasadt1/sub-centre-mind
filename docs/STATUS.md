@@ -2,7 +2,7 @@
 
 **Date**: May 2, 2026, 18:00 CET  
 **Hours logged**: 3 hrs  
-**Gate 1 status**: ✅ ON TRACK (2/4 criteria met)
+**Gate 1 status**: ✅ ON TRACK (3/4 criteria met)
 
 ---
 
@@ -32,9 +32,10 @@
 - [x] Updated Ollama (0.18.3 → 0.22.1)
 - [x] Pulled Gemma 4 E4B model (9.6 GB)
 - [x] **RESOLVED**: Disabled thinking mode (`"think": false`)
-- [x] Verified latency <12s (2.15s average) ✅
+- [x] Verified latency <12s via **API** (`/api/chat`, `think:false`, `num_predict` cap) ✅
 - [x] Verified multilingual support (Hindi) ✅
 - [x] Created smoke test script
+- [x] Verified tool calling + refusals via `scripts/g1_checks.sh` ✅
 
 ---
 
@@ -58,7 +59,7 @@
 
 ### After Ollama Update
 1. Run smoke test: `ollama run gemma4:latest "IFA tablet dose..."`
-2. Test function calling with `refuse_and_escalate` tool schema
+2. Test function calling with `refuse_and_escalate` tool schema (run `scripts/g1_checks.sh`)
 3. Begin RAG pipeline: download MoHFW PDFs to `data/health-corpus/`
 4. Write `src/rag/ingest.py` — PDF → chunks → FAISS index
 
@@ -99,10 +100,14 @@
 
 1. ❓ Function calling returns valid JSON with `refuse_and_escalate` tool call — **NOT TESTED**
 2. ❓ 5/5 refusals trigger correctly — **NOT TESTED**
-3. ✅ Multilingual RAG: Hindi + Marathi queries work — **VERIFIED** (RAG pending)
-4. ✅ Latency ≤12s per query — **PASSED** (2.15s average)
+3. ✅ Multilingual support (Hindi verified) — **VERIFIED** (RAG pending)
+4. ✅ Latency ≤12s per query — **PASSED** (API-based)
 
-**Status**: 2/4 criteria met, 2 pending implementation (on track)
+**Update (May 2):**
+- ✅ **Function calling** + ✅ **5/5 refusals** now pass via `scripts/g1_checks.sh` (Ollama `/api/chat` + `tools` + `think:false`)
+- ✅ Latency passes **when measured on the API path** (CLI `ollama run` can be misleadingly slow)
+
+**Status**: 3/4 criteria met; remaining work is **RAG ingestion + multilingual retrieval** (Gate 1 criterion #3 in the final definition).
 
 ---
 
