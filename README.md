@@ -8,13 +8,13 @@
 
 ## Overview
 
-Sub-Centre Mind is a clinical decision support tool designed for Auxiliary Nurse Midwives (ANMs) managing 5,000+ patients across India's rural sub-centres. It runs **entirely offline** using Gemma 4 E4B via Ollama, ensuring patient health information (PHI) never leaves the device.
-
+Sub-Centre Mind is a clinical decision support tool designed for Auxiliary Nurse Midwives (ANMs) managing 5,000+ patients across India's rural sub-centres. It operates on a **strict Data Sovereignty model**: all reasoning, RAG, and Patient Health Information (PHI) processing happens locally on a $200 edge device using Gemma 4 E4B. The cloud (WhatsApp) is used purely as a redacted transport layer for nudge delivery. The "brain" never leaves the room.
 ### Core Capabilities
 
 - **Protocol-grounded Q&A**: Answers questions about IFA dosing, ANC schedules, immunization protocols using RAG over MoHFW/WHO guidelines
 - **Safe refusal boundaries**: Refuses diagnostic queries (BP interpretation, insulin dosing, bleeding assessment) and escalates to named Medical Officers
 - **Closed-loop nudges**: WhatsApp reminders for IFA compliance and ANC visits, with confirmation tracking ("ली" = taken)
+- **Administrative Relief (Stretch v1)**: Auto-drafts mandatory HMIS / RCH-1 monthly reports by linking numeric figures directly to verifiable source Message IDs, ensuring auditability without adding data-entry burden.
 - **Multilingual**: Hindi, Marathi, English support
 
 ## Engineering Lineage
@@ -71,6 +71,13 @@ Must pass ALL 4:
 2. ✅ 5/5 refusals trigger correctly (BP, insulin, bleeding, metformin, TB diagnosis)
 3. ✅ Multilingual RAG: Hindi + Marathi queries return relevant chunks (>0.7 similarity)
 4. ✅ Latency ≤12s per query
+
+## Prior Art & Differentiation
+
+While previous Gemma hackathon winners (e.g., ASHA-G) successfully tackled field-worker *digitization* (OCR/Voice-to-text for ASHAs), Sub-Centre Mind pivots to **Clinical Decision Support and Administrative Relief** for the ANM at the sub-centre desk. 
+* **Different Artifact:** We do not digitize forms; we publish a deterministic refusal contract (Decision Boundary Card).
+* **Different UX:** We prioritize safety-first refusal over generic Q&A.
+* **Different Outcome:** We reduce the clinical liability and reporting backlog of the ANM, rather than adding a new digital workflow.
 
 ## Quick Start
 
@@ -132,6 +139,9 @@ sub-centre-mind/
 ├── boundary_card.json    # Decision Boundary Card
 └── requirements.txt
 ```
+
+## What We Refuse to Claim
+To maintain intellectual honesty in a complex global health domain, this project explicitly does **not** attempt to solve: physical transport logistics, sub-centre facility capacity, ASHA compensation models, or household decision-making dynamics. We provide grounded decision support; we do not replace clinical judgment.
 
 ## Hard Constraints
 
