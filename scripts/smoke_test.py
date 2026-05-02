@@ -18,6 +18,7 @@ def test_query(prompt: str, max_tokens: int = 100, timeout: int = 30) -> Dict[st
         "model": MODEL,
         "prompt": prompt,
         "stream": False,
+        "think": False,  # Disable thinking mode for Gemma 4
         "options": {
             "num_predict": max_tokens,
             "temperature": 0.1
