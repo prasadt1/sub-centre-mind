@@ -1,10 +1,29 @@
 from __future__ import annotations
 
-import json
+# Must run before Hugging Face / tokenizers import: avoids fork/thread issues on macOS
+# and reduces OpenMP clashes between PyTorch, numpy, and faiss (segfault 11 on Apple Silicon).
 import os
-from dataclasses import asdict, dataclass
+import pickle
+import sys
 from pathlib import Path
+
+_SRC_ROOT = str(Path(__file__).resolve().parent.parent)
+if _SRC_ROOT not in sys.path:
+    sys.path.insert(0, _SRC_ROOT)
+
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+
+import json
+from dataclasses import asdict, dataclass
 from typing import Iterable, List, Tuple
+
+from rag.text_tokenize import tokenize_bm25
+
+import torch
+
+torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "1")))
 
 import faiss  # type: ignore
 from PyPDF2 import PdfReader
@@ -60,7 +79,8 @@ def build_index(
     if not pdfs:
         raise FileNotFoundError(f"No PDFs found in {corpus_dir}")
 
-    model = SentenceTransformer(embedding_model)
+    # Force CPU: MPS / default device selection has triggered segfault 11 after HF downloads on some Macs.
+    model = SentenceTransformer(embedding_model, device="cpu")
 
     chunks: List[Chunk] = []
     for pdf in pdfs:
@@ -72,7 +92,13 @@ def build_index(
                 )
 
     texts = [c.text for c in chunks]
-    embeddings = model.encode(texts, normalize_embeddings=True, show_progress_bar=True)
+    embeddings = model.encode(
+        texts,
+        normalize_embeddings=True,
+        show_progress_bar=True,
+        batch_size=int(os.environ.get("SCM_ENCODE_BATCH", "32")),
+        device="cpu",
+    )
     dim = embeddings.shape[1]
 
     index = faiss.IndexFlatIP(dim)
@@ -83,11 +109,23 @@ def build_index(
     with (out_dir / "chunks.json").open("w", encoding="utf-8") as f:
         json.dump([asdict(c) for c in chunks], f, ensure_ascii=False, indent=2)
 
+    try:
+        from rank_bm25 import BM25Okapi
+
+        tok_corpus = [tokenize_bm25(t) for t in texts]
+        bm25 = BM25Okapi(tok_corpus)
+        with (out_dir / "bm25.pkl").open("wb") as f:
+            pickle.dump(bm25, f)
+        bm25_built = True
+    except ImportError:
+        bm25_built = False
+
     meta = {
         "embedding_model": embedding_model,
         "chunking": {"max_chars": max_chars, "overlap_chars": overlap_chars},
         "num_pdfs": len(pdfs),
         "num_chunks": len(chunks),
+        "bm25_hybrid_index": bm25_built,
     }
     with (out_dir / "meta.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -96,7 +134,14 @@ def build_index(
 def main() -> None:
     corpus_dir = Path(os.environ.get("SCM_CORPUS_DIR", "data/health-corpus"))
     out_dir = Path(os.environ.get("SCM_INDEX_DIR", "data/index"))
-    build_index(corpus_dir=corpus_dir, out_dir=out_dir)
+    max_chars = int(os.environ.get("SCM_CHUNK_MAX_CHARS", "900"))
+    overlap_chars = int(os.environ.get("SCM_CHUNK_OVERLAP", "120"))
+    build_index(
+        corpus_dir=corpus_dir,
+        out_dir=out_dir,
+        max_chars=max_chars,
+        overlap_chars=overlap_chars,
+    )
     print(f"Built index at {out_dir} from {corpus_dir}")
 
 

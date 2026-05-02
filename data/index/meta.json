@@ -1,0 +1,10 @@
+{
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "chunking": {
+    "max_chars": 900,
+    "overlap_chars": 120
+  },
+  "num_pdfs": 11,
+  "num_chunks": 1790,
+  "bm25_hybrid_index": true
+}
