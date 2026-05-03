@@ -52,7 +52,52 @@ _HINDI_HINTS = (
 )
 
 
-_MARATHI_CORPUS_EXPANSION = (
+# Phonetic Devanagari renderings that Whisper produces for common clinical
+# English terms. Whisper often writes loan-words phonetically rather than
+# using the standard Hindi/Marathi spelling or the original English.
+# Keys are Devanagari phonetic forms; values are the canonical English term
+# that exists in the MoHFW/WHO corpus.
+_ASR_NORMALISE_MAP: dict[str, str] = {
+    "आईरन":      "iron",        # "iron" spoken in Hindi context
+    "आयरन":      "iron",        # alternative phonetic form
+    "कल्छिम":    "calcium",     # "calcium" — common Whisper mis-transcription
+    "कल्शियम":   "calcium",     # closer phonetic form
+    "कैल्शियम":  "calcium",     # standard Hindi spelling → normalise to English
+    "हेमोग्लोबिन": "haemoglobin",
+    "एनीमिया":   "anaemia",
+    "अनीमिया":   "anaemia",
+    "विटामिन":   "vitamin",
+    "प्रोटीन":   "protein",
+    "सप्लीमेंट": "supplement",
+    "फोलिक":     "folic",       # "folic acid" partial
+    "एसिड":      "acid",        # paired with फोलिक
+    "टेबलेट":    "tablet",
+    "डोज":       "dose",
+    "जिंक":      "zinc",
+}
+
+
+def normalise_asr_transcript(text: str) -> str:
+    """Replace known phonetic Devanagari mis-transcriptions with English equivalents.
+
+    Whisper (and other ASR systems) often transcribe clinical loan-words
+    phonetically into Devanagari (e.g. "कल्छिम" for "calcium"). These forms
+    do not appear in the MoHFW corpus, so FAISS similarity suffers. This
+    function maps them back to the English terms that *do* appear in the index.
+
+    The surrounding Hindi/Marathi sentence structure is preserved — only the
+    known phonetic tokens are replaced. Safe to call on any text; strings with
+    no known phonetic tokens are returned unchanged.
+    """
+    if not text:
+        return text
+    result = text
+    for phonetic, canonical in _ASR_NORMALISE_MAP.items():
+        result = result.replace(phonetic, canonical)
+    return result
+
+
+_INDIC_CORPUS_EXPANSION = (
     "pregnancy maternal health IFA iron folic acid supplementation "
     "ANC antenatal care immunization guidelines dose schedule"
 )
@@ -62,16 +107,16 @@ def expand_query_for_retrieval(text: str) -> str:
     """Return a retrieval-optimised version of *text*.
 
     The FAISS index is built from English/Hindi clinical corpus chunks.
-    The multilingual MiniLM embedder handles those languages better than
-    Marathi, so short Marathi queries can fall below the 0.7 similarity
-    threshold even when semantically correct.
+    The multilingual MiniLM embedder produces lower similarities for
+    Hindi and Marathi queries against an English-primary corpus.
 
-    For Marathi queries we append a short English domain phrase so the
-    joint embedding aligns better with corpus vectors. The original text
-    is always the prefix — Ollama still receives the user's own language.
+    For Hindi and Marathi queries we append a short English clinical domain
+    phrase so the joint embedding aligns better with corpus vectors. The
+    original text is always the prefix — Ollama still receives the user's
+    own language for generation.
     """
-    if detect_language(text) == "mr":
-        return f"{text} {_MARATHI_CORPUS_EXPANSION}"
+    if detect_language(text) in ("mr", "hi"):
+        return f"{text} {_INDIC_CORPUS_EXPANSION}"
     return text
 
 

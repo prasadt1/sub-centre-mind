@@ -5,6 +5,57 @@ Format: `[YYYY-MM-DD] <type>: <title>` — type is `fix`, `feat`, or `chore`.
 
 ---
 
+## [2026-05-03] fix: Hindi ASR voice query blocked — phonetic Devanagari mis-transcriptions
+
+**Issue**
+Voice query `"आईरन और कल्छिम की कमी के लिए क्या करें?"` (transcribed from speech)
+was blocked by the confidence gate with `top_semantic_score: 0.562` (threshold 0.70).
+
+**Root cause**
+Two distinct problems combined:
+
+1. **ASR phonetic mis-transcription** — Whisper transcribed the English loan-words
+   "iron" and "calcium" as `आईरन` and `कल्छिम` respectively. These Devanagari
+   phonetic forms do not appear anywhere in the MoHFW/WHO corpus, so the
+   embedding model (`paraphrase-multilingual-MiniLM-L12-v2`) could not align
+   them to the correct medical concepts.
+
+2. **Hindi queries not expanded** — the Marathi fix from earlier in the day
+   (appending English clinical context terms) was not applied to Hindi queries.
+   Hindi is the dominant language of the corpus but mixed-vocabulary queries
+   (Devanagari structure + mis-transcribed medical terms) still suffered from
+   vocabulary mismatch.
+
+**Fix A — `normalise_asr_transcript()` in `src/rag/lang.py`**
+New function with a `_ASR_NORMALISE_MAP` dictionary of known Devanagari
+phonetic forms → canonical English terms (13 entries covering iron, calcium,
+haemoglobin, anaemia, vitamin, protein, supplement, folic, acid, tablet, dose,
+zinc). Applied via simple `.replace()` token-by-token. Non-matching text is
+returned unchanged — zero side effects for normal queries.
+
+**Fix B — Hindi expansion in `expand_query_for_retrieval()` in `src/rag/lang.py`**
+Extended condition from `lang == "mr"` to `lang in ("mr", "hi")`. Hindi queries
+now also get the English clinical domain phrase appended before FAISS retrieval.
+
+**Integration** — `src/query_router.py` `orchestrate_query()` now chains:
+```python
+retrieval_q = expand_query_for_retrieval(normalise_asr_transcript(q))
+```
+Ollama still receives the original unmodified `q`.
+
+**Verified scores after fix**
+
+| Query | Before | After |
+|-------|--------|-------|
+| `आईरन और कल्छिम की कमी के लिए क्या करें?` (ASR) | **0.562** | **0.778** |
+| `गर्भवती महिलाओं के लिए IFA खुराक क्या है?` (Hindi) | 0.739 | **0.782** |
+| `गर्भवती महिलांसाठी IFA डोस काय आहे?` (Marathi) | 0.761 | 0.761 |
+| `IFA tablet dose for pregnant women` (English) | 0.765 | 0.765 |
+
+All queries now pass the 0.70 gate. 7 new tests added to `tests/test_lang.py`.
+
+---
+
 ## [2026-05-03] fix: test suite pollution via sys.modules stub in test_generate_integration
 
 **Issue**

@@ -12,7 +12,7 @@ for p in (_SRC, _REPO):
     if s not in sys.path:
         sys.path.insert(0, s)
 
-from rag.lang import detect_language, expand_query_for_retrieval
+from rag.lang import detect_language, expand_query_for_retrieval, normalise_asr_transcript
 
 
 def test_empty_returns_unknown() -> None:
@@ -60,9 +60,12 @@ def test_expand_query_english_unchanged() -> None:
     assert expand_query_for_retrieval(q) == q
 
 
-def test_expand_query_hindi_unchanged() -> None:
+def test_expand_query_hindi_expanded() -> None:
     q = "गर्भवती महिलाओं के लिए IFA खुराक क्या है?"
-    assert expand_query_for_retrieval(q) == q
+    expanded = expand_query_for_retrieval(q)
+    assert expanded != q, "Hindi query must be expanded"
+    assert expanded.startswith(q), "original Hindi text must be the prefix"
+    assert any(kw in expanded.lower() for kw in ("pregnancy", "ifa", "supplementation", "anc"))
 
 
 def test_expand_query_marathi_preserves_original_as_prefix() -> None:
@@ -85,3 +88,41 @@ def test_expand_query_marathi_appends_english_clinical_terms() -> None:
 def test_expand_query_unknown_lang_unchanged() -> None:
     q = "?!?? ..."
     assert expand_query_for_retrieval(q) == q
+
+
+# --- normalise_asr_transcript ---
+
+def test_normalise_phonetic_iron() -> None:
+    assert "iron" in normalise_asr_transcript("आईरन की कमी")
+
+
+def test_normalise_calcium_variant_kalachhim() -> None:
+    result = normalise_asr_transcript("कल्छिम की जांच करें")
+    assert "calcium" in result.lower()
+
+
+def test_normalise_calcium_variant_kalshiyam() -> None:
+    result = normalise_asr_transcript("कल्शियम टेबलेट लें")
+    assert "calcium" in result.lower()
+
+
+def test_normalise_real_failing_query() -> None:
+    q = "आईरन और कल्छिम की कमी के लिए क्या करें?"
+    result = normalise_asr_transcript(q)
+    assert "iron" in result
+    assert "calcium" in result.lower()
+    assert "कमी" in result, "non-phonetic Hindi words must be preserved"
+
+
+def test_normalise_no_phonetic_terms_unchanged() -> None:
+    q = "गर्भवती महिलाओं के लिए IFA खुराक क्या है?"
+    assert normalise_asr_transcript(q) == q
+
+
+def test_normalise_empty_unchanged() -> None:
+    assert normalise_asr_transcript("") == ""
+
+
+def test_normalise_english_unchanged() -> None:
+    q = "IFA schedule in pregnancy"
+    assert normalise_asr_transcript(q) == q

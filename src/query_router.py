@@ -19,7 +19,7 @@ if str(_SRC) not in sys.path:
 
 import requests
 
-from rag.lang import expand_query_for_retrieval
+from rag.lang import expand_query_for_retrieval, normalise_asr_transcript
 from rag.query import RetrievedChunk, format_citations, retrieve
 
 OLLAMA_CHAT_URL = os.environ.get("OLLAMA_CHAT_URL", "http://localhost:11434/api/chat")
@@ -134,7 +134,9 @@ def orchestrate_query(
     Retrieve chunks, then call Ollama chat with Gate 1 tools (same contract as scripts/g1_checks.sh).
     """
     q = (user_query or "").strip()
-    retrieval_q = expand_query_for_retrieval(q) if q else q
+    # Normalise ASR phonetic mis-transcriptions first, then expand for retrieval.
+    # Both steps only affect the embedding query; Ollama still receives `q`.
+    retrieval_q = expand_query_for_retrieval(normalise_asr_transcript(q)) if q else q
     retrieved = retrieve(retrieval_q, index_dir=index_dir, top_k=top_k) if q else []
 
     gate_on = os.environ.get("SCM_CONFIDENCE_GATE", "1").strip().lower() not in ("0", "false", "no")
