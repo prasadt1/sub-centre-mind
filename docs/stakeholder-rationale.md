@@ -63,6 +63,7 @@ The moat is **not** any single artifact — it is the **integration**:
 | Today (Gate 1, verified) | Roadmap (see [ADR-0001](adr/0001-runtime-architecture-edge-deployment.md)) |
 |--------------------------|----------------------------------------------------------------------------|
 | Gemma 4 E4B via **Ollama** | **Cactus** on phone (HTTP bridge + native companion) |
+| **`SCM_BACKEND=cactus` + [dev shim](cactus-poc.md)** (forwards to Ollama) | Native Kotlin + libcactus implementing the same `/api/*` JSON |
 | Hybrid **FAISS + BM25** retrieval | **LiteRT** as alternative edge runtime |
 | **faster-whisper** ASR | **Unsloth** fine-tuning on protocol + refusal behaviour |
 | **Streamlit** demo UI | ANM-first mobile shell; optional ASHA delivery UI |
@@ -104,7 +105,8 @@ The moat is **not** any single artifact — it is the **integration**:
 - **No** adversarial test battery yet.  
 - Model can still err **inside** answerable zone; gate reduces but does not eliminate risk.  
 - Nudge **transport** (SMS/WhatsApp) not wired — state machine only.  
-- **Field pilots** post-hackathon for usability proof.
+- **Field pilots** post-hackathon for usability proof.  
+- **Cactus dev shim** proves the Python `CactusBackend` wire path; it is **not** the Cactus SDK on-device — that remains build work for the prize line.
 
 ---
 
@@ -115,4 +117,5 @@ The moat is **not** any single artifact — it is the **integration**:
 3. [`boundary_card.json`](../boundary_card.json)  
 4. `bash scripts/g1_checks.sh`  
 5. [ADR-0001](adr/0001-runtime-architecture-edge-deployment.md)  
-6. Live demo: `bash scripts/warmup.sh && bash scripts/run_app.sh`
+6. [Cactus POC checklist](cactus-poc.md) — `SCM_BACKEND=cactus` via dev shim  
+7. Live demo: `bash scripts/warmup.sh && bash scripts/run_app.sh`

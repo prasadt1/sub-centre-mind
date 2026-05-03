@@ -14,7 +14,7 @@ mkdir -p data/logs data/nudges
 
 echo "Sub-Centre Mind app:"
 echo "  http://${ADDR}:${PORT}"
-echo "  audit log:    ${SCM_AUDIT_LOG:-data/logs/dev_events.jsonl}"
+echo "  audit log:    ${SCM_AUDIT_LOG:-data/logs/sample_events.jsonl}"
 echo "  nudge store:  ${SCM_NUDGE_STORE:-data/nudges/store.json}"
 echo
 

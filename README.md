@@ -9,7 +9,7 @@
 [![Gemma 4 Good — Health & Sciences](https://img.shields.io/badge/Gemma%204%20Good-Health%20%26%20Sciences-1a73e8?logo=google&logoColor=white)](https://www.kaggle.com/competitions/gemma-4-good)
 [![Model](https://img.shields.io/badge/Model-Gemma%204%20E4B%20(Ollama)-FF6F00?logo=ollama&logoColor=white)](https://ollama.com/)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-63%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-65%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Data Sovereignty](https://img.shields.io/badge/PHI-Never%20Leaves%20Device-critical)](boundary_card.json)
 
@@ -33,7 +33,7 @@
 > | ✅ **Gate 1 evidence** | Run `bash scripts/g1_checks.sh` (requires Ollama + gemma4:latest) | 5 min |
 > | 🖥️ **Live demo** | `bash scripts/warmup.sh && bash scripts/run_app.sh` → [http://127.0.0.1:8501](http://127.0.0.1:8501) | 3 min |
 >
-> **TL;DR:** All 4 Gate 1 criteria pass. 63 tests. Multilingual (Hindi/Marathi/English). Voice input. 4-tab Streamlit demo. Zero cloud inference — Gemma 4 E4B via Ollama only. Safety contract: [`boundary_card.json`](boundary_card.json).
+> **TL;DR:** All 4 Gate 1 criteria pass. 65 tests. Multilingual (Hindi/Marathi/English). Voice input. 4-tab Streamlit demo. Zero cloud inference — Gemma 4 E4B via Ollama only. Safety contract: [`boundary_card.json`](boundary_card.json).
 
 ---
 
@@ -177,7 +177,7 @@ All refusal entries include: `reason`, `urgency` (low / medium / high / critical
 
 | Today (Gate 1) | Roadmap ([ADR-0001](docs/adr/0001-runtime-architecture-edge-deployment.md)) |
 |----------------|----------------------------------------------------------------------------|
-| Gemma 4 E4B via **Ollama** | **Cactus** on phone (zero-hardware path) |
+| Gemma 4 E4B via **Ollama** | **Cactus** on phone (zero-hardware path); dev shim: [`scripts/cactus_bridge_shim.py`](scripts/cactus_bridge_shim.py) + [`docs/cactus-poc.md`](docs/cactus-poc.md) |
 | **FAISS + BM25** hybrid retrieval | **LiteRT** as alternative edge runtime |
 | **faster-whisper** ASR | **Unsloth** fine-tuning on protocol + refusal behaviour |
 | **Streamlit** demo | ANM-first mobile UI; optional [ASHA](https://en.wikipedia.org/wiki/Accredited_Social_Health_Activist) field-delivery tier for nudges |
@@ -239,6 +239,23 @@ bash scripts/warmup.sh              # pre-loads Gemma 4 (avoids 16s cold-start)
 bash scripts/run_app.sh             # opens http://127.0.0.1:8501
 ```
 
+### Cactus backend path (demo / video)
+
+To show the **`SCM_BACKEND=cactus`** stack end-to-end **before** a native Android companion exists, run the **Ollama-compatible dev shim** (forwards `/api/generate` and `/api/chat` to `ollama serve` — same JSON a Kotlin **Cactus** companion will implement):
+
+```bash
+# Terminal A — already running: ollama serve
+# Terminal B — shim on port 18765
+bash scripts/run_cactus_shim.sh
+
+# Terminal C — Streamlit using CactusBackend → shim → Ollama
+export SCM_BACKEND=cactus SCM_CACTUS_HTTP_BASE=http://127.0.0.1:18765
+bash scripts/warmup.sh
+bash scripts/run_app.sh
+```
+
+Full checklist and **LiteRT** note: **[`docs/cactus-poc.md`](docs/cactus-poc.md)**.
+
 ### Gate 1 checks
 
 ```bash
@@ -261,7 +278,7 @@ python scripts/rag_smoke.py "गर्भवती महिलांसाठ�
 
 ```bash
 pytest tests/ -q
-# 63 passed, 1 skipped
+# 65 passed, 1 skipped
 ```
 
 | Test file | Covers |
@@ -283,8 +300,8 @@ pytest tests/ -q
 
 | Metric | Value |
 |--------|-------|
-| Tests | **63 passed, 1 skipped** |
-| Source modules | **12** (rag, audit, nudges, vision, voice, query_router) |
+| Tests | **65 passed, 1 skipped** |
+| Source modules | **13** (rag, audit, nudges, vision, voice, query_router, llm, …) |
 | Decision Boundary Card entries | **16 answerable + 16 refusals** |
 | Corpus PDFs indexed | **11** (MoHFW + WHO) |
 | Gate 1 criteria | **4 / 4 passing** |
@@ -321,9 +338,11 @@ sub-centre-mind/
 │   ├── index/                  # FAISS index + BM25 + chunks.json
 │   ├── logs/                   # Audit JSONL (sample_events.jsonl tracked)
 │   └── nudges/                 # Nudge state store (gitignored)
-├── tests/                      # pytest suite (63 passed, 1 skipped)
+├── tests/                      # pytest suite (65 passed, 1 skipped)
 ├── scripts/
 │   ├── g1_checks.sh            # Gate 1 automated verification
+│   ├── cactus_bridge_shim.py   # Ollama-compatible proxy for SCM_BACKEND=cactus POC
+│   ├── run_cactus_shim.sh      # Start shim on port 18765
 │   ├── rag_smoke.py            # RAG similarity smoke test
 │   ├── run_app.sh              # Launch Streamlit demo
 │   ├── warmup.sh               # Pre-load Gemma 4 for fast first-token
@@ -331,6 +350,7 @@ sub-centre-mind/
 │   └── report_from_logs.py     # Generate report from audit JSONL
 └── docs/
     ├── stakeholder-rationale.md # Vision, mission, decision matrix, FAQ
+    ├── cactus-poc.md             # Cactus backend path + demo checklist
     ├── adr/0001-runtime-architecture-edge-deployment.md
     ├── NEXT.md                 # 25-task phased roadmap
     ├── CHANGELOG.md            # Issue log + fixes with root causes
