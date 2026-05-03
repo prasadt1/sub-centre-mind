@@ -7,7 +7,7 @@
 [![Gemma 4 Good — Health & Sciences](https://img.shields.io/badge/Gemma%204%20Good-Health%20%26%20Sciences-1a73e8?logo=google&logoColor=white)](https://www.kaggle.com/competitions/gemma-4-good)
 [![Model](https://img.shields.io/badge/Model-Gemma%204%20E4B%20(Ollama)-FF6F00?logo=ollama&logoColor=white)](https://ollama.com/)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-60%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-63%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Data Sovereignty](https://img.shields.io/badge/PHI-Never%20Leaves%20Device-critical)](boundary_card.json)
 
@@ -31,7 +31,7 @@
 > | ✅ **Gate 1 evidence** | Run `bash scripts/g1_checks.sh` (requires Ollama + gemma4:latest) | 5 min |
 > | 🖥️ **Live demo** | `bash scripts/warmup.sh && bash scripts/run_app.sh` → [http://127.0.0.1:8501](http://127.0.0.1:8501) | 3 min |
 >
-> **TL;DR:** All 4 Gate 1 criteria pass. 60 tests. Multilingual (Hindi/Marathi/English). Voice input. 4-tab Streamlit demo. Zero cloud inference — Gemma 4 E4B via Ollama only.
+> **TL;DR:** All 4 Gate 1 criteria pass. 63 tests. Multilingual (Hindi/Marathi/English). Voice input. 4-tab Streamlit demo. Zero cloud inference — Gemma 4 E4B via Ollama only.
 
 ---
 
@@ -60,7 +60,7 @@
 
 ## The Problem
 
-India's Auxiliary Nurse Midwife (ANM) is the frontline of maternal and child health for 3,000–5,000 patients per sub-centre. She faces three compounding gaps:
+India's [Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife) (ANM) is the frontline of maternal and child health for 3,000–5,000 patients per sub-centre — the trained nurse–midwife cadre that links rural communities to India's primary health system. She faces three compounding gaps:
 
 | Gap | Reality |
 |-----|---------|
@@ -241,7 +241,7 @@ python scripts/rag_smoke.py "गर्भवती महिलांसाठ�
 
 ```bash
 pytest tests/ -q
-# 60 passed, 1 skipped
+# 63 passed, 1 skipped
 ```
 
 | Test file | Covers |
@@ -263,7 +263,7 @@ pytest tests/ -q
 
 | Metric | Value |
 |--------|-------|
-| Tests | **60 passed, 1 skipped** |
+| Tests | **63 passed, 1 skipped** |
 | Source modules | **12** (rag, audit, nudges, vision, voice, query_router) |
 | Decision Boundary Card entries | **16 answerable + 16 refusals** |
 | Corpus PDFs indexed | **11** (MoHFW + WHO) |
@@ -301,7 +301,7 @@ sub-centre-mind/
 │   ├── index/                  # FAISS index + BM25 + chunks.json
 │   ├── logs/                   # Audit JSONL (sample_events.jsonl tracked)
 │   └── nudges/                 # Nudge state store (gitignored)
-├── tests/                      # 60-test pytest suite
+├── tests/                      # pytest suite (63 passed, 1 skipped)
 ├── scripts/
 │   ├── g1_checks.sh            # Gate 1 automated verification
 │   ├── rag_smoke.py            # RAG similarity smoke test
@@ -392,7 +392,7 @@ The core insight transfers exactly: *advice without follow-through accountabilit
 |-------------|-----------|
 | **AAM** | Ayushman Arogya Mandir — upgraded sub-centre model under India's national health mission |
 | **ANC** | Antenatal Care — routine pregnancy check-ups |
-| **ANM** | Auxiliary Nurse Midwife — frontline health worker staffing sub-centres |
+| **ANM** | [Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife) — trained nurse–midwife staffing sub-centres; bridge between community and facility care (India) |
 | **ASR** | Automatic Speech Recognition — converts voice to text |
 | **BM25** | Best Matching 25 — keyword-based text retrieval algorithm |
 | **FAISS** | Facebook AI Similarity Search — vector similarity library |
