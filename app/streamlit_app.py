@@ -181,7 +181,10 @@ with tab_ask:
             audio = st.audio_input("Record a short query")
         except AttributeError:
             audio = None
-            st.info("Streamlit ≥ 1.31 is required for in-browser recording.")
+            st.info(
+                "Streamlit ≥ 1.31 is required for in-browser recording. "
+                "Upgrade: `pip install -U 'streamlit>=1.31'` then restart the app."
+            )
 
         if audio is not None and st.button("Transcribe and use as question"):
             with st.spinner("Transcribing locally..."):

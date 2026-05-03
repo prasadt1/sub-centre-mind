@@ -28,8 +28,8 @@ python-dotenv==1.0.0
 pydantic==2.5.0
 requests>=2.28.0
 
-# Demo UI (local-first, single command)
-streamlit>=1.30
+# Demo UI (local-first, single command). st.audio_input needs ≥1.31.
+streamlit>=1.31
 
 # Local ASR (Hindi/Marathi/English voice input — Phase G)
 # Note: faster-whisper installs onnxruntime + ctranslate2; CPU-only is fine.
