@@ -1,8 +1,10 @@
-![Sub-Centre Mind — ANM clinical decision support](docs/images/hero.png)
+![Sub-Centre Mind — offline closed-loop co-pilot for last-mile maternal health](docs/images/hero.png)
 
 # Sub-Centre Mind
 
-**Local-first clinical decision support for India's ANMs. The brain never leaves the room.**
+**Offline closed-loop co-pilot for India's last-mile maternal health — recall, track, report, refuse.**
+
+*When the cloud disconnects, care still connects.*
 
 [![Gemma 4 Good — Health & Sciences](https://img.shields.io/badge/Gemma%204%20Good-Health%20%26%20Sciences-1a73e8?logo=google&logoColor=white)](https://www.kaggle.com/competitions/gemma-4-good)
 [![Model](https://img.shields.io/badge/Model-Gemma%204%20E4B%20(Ollama)-FF6F00?logo=ollama&logoColor=white)](https://ollama.com/)
@@ -15,9 +17,9 @@
 
 **Why it matters.** India has roughly **170,000 [Sub-Centres](https://en.wikipedia.org/wiki/Public_health_system_in_India#Sub_Centres)** — the smallest **peripheral** government health facilities in the rural primary-care chain (typically staffed by at least one ANM; **Primary Health Centres** with a doctor sit one tier above — see [Primary Health Centre (India)](https://en.wikipedia.org/wiki/Primary_Health_Centre_(India))). Many are being upgraded to [Ayushman Arogya Mandirs](https://sansad.in/getFile/loksabhaquestions/annex/187/AU1365_H1B8B8.pdf?source=pqals). Each Sub-Centre serves about **3,000–5,000** people and is staffed by at least one ANM ([Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife)) — often the sole qualified health worker at that post. She has no doctor within reach, a stack of paper registers to fill, and protocols that span hundreds of pages of MoHFW (Ministry of Health and Family Welfare) guidelines. When she's unsure — about an IFA (Iron and Folic Acid) dose, a danger sign, a refusal boundary — there is no one to ask. With the ongoing AAM (Ayushman Arogya Mandir) transformation expanding ANM responsibilities to NCD (Non-Communicable Disease) screening, the need for protocol-grounded decision support is growing, not shrinking.
 
-**What I built.** A local-first clinical co-pilot that runs entirely on the ANM's own device. It answers safe protocol questions (IFA dosing, ANC (Antenatal Care) schedules, immunization), refuses diagnostic overreach with a deterministic, machine-readable contract, sends closed-loop nudges for IFA compliance, and drafts supervisor reports from an audit trail — all without a single byte of PHI (Protected Health Information) leaving the sub-centre.
+**What I built.** **Sub-Centre Mind** is an offline, voice-first clinical co-pilot for India's [Auxiliary Nurse Midwives](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife) — the trained nurse–midwives who staff each of the country's ~170,000 [Sub-Centres](https://en.wikipedia.org/wiki/Public_health_system_in_India#Sub_Centres), serving about 3,000–5,000 people with no doctor on site and often no reliable internet. Built on **Gemma 4 E4B** running entirely on-device (**Ollama**), it answers protocol questions in seconds (Hindi, Marathi, English) grounded in **11** indexed MoHFW/WHO guideline PDFs, tracks follow-ups via a **closed-loop nudge** state machine, drafts supervisor reports from a **local audit trail**, and structurally refuses to diagnose — enforced by a **versioned, machine-readable** safety contract ([`boundary_card.json`](boundary_card.json)) verifiable in minutes via `scripts/g1_checks.sh`. **No** patient-identifiable data leaves the sub-centre by design.
 
-**The differentiator.** The [Decision Boundary Card](#-decision-boundary-card) — a machine-readable specification of exactly what the model answers, refuses, and escalates. Not a vague "it will be safe" claim; a versioned contract with 16 answerable entries and 16 refusal triggers, verifiable in 5 minutes.
+**The differentiator** is **not** any single file — it is the **integration**: an LLM small enough to run locally (**Gemma 4 E4B**), grounded in the right corpus, **gated** by retrieval confidence before generation, **bounded** by verifiable refusal behaviour + native function calling, **closed-looped** through nudges and **audited** end-to-end — **all offline.** Cloud chatbots are more capable; government digitisation tools handle reporting. Neither replaces what an ANM needs during a patient contact with no signal. For the full stakeholder narrative (vision, mission, decision matrix, devil's-advocate FAQ), see **[`docs/stakeholder-rationale.md`](docs/stakeholder-rationale.md)**.
 
 ---
 
@@ -27,17 +29,18 @@
 >
 > | Path | What you'll see | Time |
 > |------|-----------------|------|
-> | 🔍 **Primary artifact** | [`boundary_card.json`](boundary_card.json) — 16 answerable + 16 refusals | 2 min |
+> | 📄 **Why this exists** | [`docs/stakeholder-rationale.md`](docs/stakeholder-rationale.md) — vision, mission, decision matrix, FAQ | 8 min |
 > | ✅ **Gate 1 evidence** | Run `bash scripts/g1_checks.sh` (requires Ollama + gemma4:latest) | 5 min |
 > | 🖥️ **Live demo** | `bash scripts/warmup.sh && bash scripts/run_app.sh` → [http://127.0.0.1:8501](http://127.0.0.1:8501) | 3 min |
 >
-> **TL;DR:** All 4 Gate 1 criteria pass. 63 tests. Multilingual (Hindi/Marathi/English). Voice input. 4-tab Streamlit demo. Zero cloud inference — Gemma 4 E4B via Ollama only.
+> **TL;DR:** All 4 Gate 1 criteria pass. 63 tests. Multilingual (Hindi/Marathi/English). Voice input. 4-tab Streamlit demo. Zero cloud inference — Gemma 4 E4B via Ollama only. Safety contract: [`boundary_card.json`](boundary_card.json).
 
 ---
 
 ## Contents
 
 - [The Problem](#the-problem)
+- [Vision & rationale (doc)](docs/stakeholder-rationale.md)
 - [What I Built](#what-i-built)
 - [Gate 1 Status](#-gate-1-status)
 - [Decision Boundary Card](#-decision-boundary-card)
@@ -76,10 +79,16 @@ Previous tools either require connectivity, expose PHI to the cloud, or add data
 
 A **local-first, offline-capable** clinical decision support system with five interlocking components:
 
+### Three things, offline
+
+1. **Recalls** — protocol Q&A (hybrid RAG + confidence gate), voice-first, Hindi / Marathi / English.  
+2. **Tracks** — closed-loop nudge state machine (SCHEDULED → SENT → CONFIRMED / ESCALATED); **SMS/WhatsApp delivery is roadmap**, not shipped — see [`docs/stakeholder-rationale.md`](docs/stakeholder-rationale.md).  
+3. **Refuses** — Gemma 4 `/api/chat` tool calling fires `refuse_and_escalate` for diagnostic / prescriptive queries; structured urgency and escalation target.
+
 | Component | What it does |
 |-----------|-------------|
 | **RAG (Retrieval-Augmented Generation) Engine** | Hybrid FAISS + BM25 retrieval over 11 MoHFW/WHO guideline PDFs. Confidence gate: similarity ≥ 0.7 or no generation |
-| **Refusal Contract** | Deterministic tool-calling via Gemma 4's `/api/chat` function API — `refuse_and_escalate` fires for all diagnostic/prescriptive queries |
+| **Refusal Contract** | Tool-calling via Gemma 4's `/api/chat` function API — `refuse_and_escalate` fires for all diagnostic/prescriptive queries |
 | **Multilingual ASR (Automatic Speech Recognition)** | Local Whisper (faster-whisper) with Hindi/Urdu disambiguation, phonetic normalisation for medical loan-words |
 | **Nudge Engine** | Closed-loop state machine (SCHEDULED → SENT → CONFIRMED / ESCALATED), persisted locally |
 | **Audit → Report** | Append-only JSONL audit trail → aggregate stats → downloadable draft supervisor summary |
@@ -88,7 +97,7 @@ A **local-first, offline-capable** clinical decision support system with five in
 
 ## ✅ Gate 1 Status
 
-Gate 1 deadline: **May 5, 2026, 18:00 CET** — all four criteria verified.
+All four Gate 1 criteria verified **May 3, 2026.** Hackathon submission deadline: **May 18, 2026** (Gemma 4 Good — Health & Sciences).
 
 | Criterion | Result | Evidence |
 |-----------|--------|---------|
@@ -107,7 +116,7 @@ Checks 3 and 4 require the FAISS index (`data/index/`) and a warm Ollama instanc
 
 ## 🗂 Decision Boundary Card
 
-[`boundary_card.json`](boundary_card.json) is the primary hackathon artifact — a machine-readable specification of the model's refusal contract.
+[`boundary_card.json`](boundary_card.json) is the **verifiable safety contract** — a machine-readable specification of what the model answers, refuses, and escalates. It is **supporting evidence** for the integration story above, not the product headline: run `g1_checks.sh` to reproduce refusals in minutes.
 
 **v0.1 — verified May 3, 2026**
 
@@ -163,6 +172,17 @@ All refusal entries include: `reason`, `urgency` (low / medium / high / critical
 - **Confidence gate before generation** — if top retrieval similarity < 0.7, Ollama is never called. Prevents hallucination on weak evidence.
 - **ASR normalisation pipeline** — Whisper phonetic mis-transcriptions (e.g. `कल्शीम` → `calcium`) are normalised before FAISS embedding. Hindi/Urdu disambiguation with auto-retry.
 - **PHI never leaves the device** — audit log is local JSONL; nudge state is local JSON; no cloud write path exists.
+
+**Tech stack — today vs roadmap**
+
+| Today (Gate 1) | Roadmap ([ADR-0001](docs/adr/0001-runtime-architecture-edge-deployment.md)) |
+|----------------|----------------------------------------------------------------------------|
+| Gemma 4 E4B via **Ollama** | **Cactus** on phone (zero-hardware path) |
+| **FAISS + BM25** hybrid retrieval | **LiteRT** as alternative edge runtime |
+| **faster-whisper** ASR | **Unsloth** fine-tuning on protocol + refusal behaviour |
+| **Streamlit** demo | ANM-first mobile UI; optional [ASHA](https://en.wikipedia.org/wiki/Accredited_Social_Health_Activist) field-delivery tier for nudges |
+
+Query routing and orchestration are **Python** (`query_router.py`); Cactus is **not** the production router until a native companion ships.
 
 ---
 
@@ -280,7 +300,7 @@ pytest tests/ -q
 
 ```
 sub-centre-mind/
-├── boundary_card.json          # ← Primary hackathon artifact
+├── boundary_card.json          # Verifiable safety contract (spec + g1_checks)
 ├── src/
 │   ├── rag/
 │   │   ├── ingest.py           # PDF → FAISS + BM25 index
@@ -310,6 +330,8 @@ sub-centre-mind/
 │   ├── run_nudges.py           # Nudge state machine demo (CLI)
 │   └── report_from_logs.py     # Generate report from audit JSONL
 └── docs/
+    ├── stakeholder-rationale.md # Vision, mission, decision matrix, FAQ
+    ├── adr/0001-runtime-architecture-edge-deployment.md
     ├── NEXT.md                 # 25-task phased roadmap
     ├── CHANGELOG.md            # Issue log + fixes with root causes
     ├── ARCHITECTURE.md         # Full architecture notes
@@ -324,11 +346,11 @@ Previous Gemma hackathon winners (e.g., ASHA-G) tackled field-worker **digitizat
 
 | Dimension | ASHA-G / digitization tools | Sub-Centre Mind |
 |-----------|----------------------------|-----------------|
-| **Primary artifact** | Digital form / OCR output | Machine-readable refusal contract (boundary_card.json) |
-| **Core UX** | Replace paper with digital | Keep paper, add a safe co-pilot |
-| **Safety model** | Best-effort Q&A | Deterministic refusal boundaries with escalation |
-| **Outcome** | Reduces form-filling burden | Reduces clinical liability + reporting backlog |
-| **Data path** | Form data → cloud | PHI never leaves the device |
+| **Primary value** | Digital form / OCR output | **Offline** protocol recall + **closed-loop** follow-up + **audited** reporting — refusal contract is proof, not the whole product |
+| **Core UX** | Replace paper with digital | Keep paper, add a voice-first co-pilot |
+| **Safety model** | Best-effort Q&A | Retrieval gate + verifiable refusal contract + tool-calling escalation |
+| **Outcome** | Reduces form-filling burden | Reduces recall burden + follow-through gaps + reporting backlog |
+| **Data path** | Form data → cloud | PHI never leaves the device (local design) |
 
 ---
 
@@ -359,12 +381,13 @@ I provide grounded decision support for a single professional (the ANM). I do no
 
 ## Roadmap
 
-See [`docs/NEXT.md`](docs/NEXT.md) for the full 25-task build checklist across 4 phases.
+See [`docs/NEXT.md`](docs/NEXT.md) for the full 25-task build checklist across 4 phases. Stakeholder narrative (vision, ASHA tier, limitations): [`docs/stakeholder-rationale.md`](docs/stakeholder-rationale.md).
 
 **Phase 1 (Gate 1):** Complete ✅ — RAG, refusal contract, voice, vision, nudges, audit  
 **Phase 2:** Edge deployment via Cactus (phone-only, zero hardware cost) — see [ADR-0001](docs/adr/0001-runtime-architecture-edge-deployment.md)  
 **Phase 3:** Corpus expansion, Boundary Card v0.2, Unsloth fine-tuning  
-**Phase 4:** HMIS / RCH-1 monthly report auto-draft with source-linked figures
+**Phase 4:** HMIS / RCH-1 monthly report auto-draft with source-linked figures  
+**Care chain (aspirational):** [ASHA](https://en.wikipedia.org/wiki/Accredited_Social_Health_Activist) as field delivery arm for nudges; patient-facing tier only with a separate safety + language layer — see stakeholder rationale doc
 
 ---
 

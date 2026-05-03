@@ -9,3 +9,5 @@ Use **first person singular** — **I**, not **we** — when describing what was
 ## International readers
 
 Indian institutional terms (**Sub-Centre**, **PHC**, **ASHA**, **NHM**, etc.) should include a **plain-language gloss** and/or a **stable Wikipedia (or official) link** on first substantive mention in README/ADR, so non-Indian judges are not assumed to know the facility pyramid.
+
+Stakeholder narrative (vision, mission, decision matrix, devil's-advocate FAQ): **`docs/stakeholder-rationale.md`** — keep in sync when the product pitch changes.
