@@ -59,3 +59,48 @@ def test_model_cache_reused(monkeypatch):
     transcribe(b"a", model_name="tiny")
     transcribe(b"b", model_name="tiny")
     assert "tiny" in asr_module._MODEL_CACHE
+
+
+def test_transcribe_urdu_output_retries_as_hindi(monkeypatch):
+    """When Whisper returns Urdu (Arabic script) output, transcribe_with_hindi_fallback
+    must retry with language='hi' and return the Hindi Devanagari result."""
+    from voice.asr import transcribe_with_hindi_fallback
+
+    call_log = []
+
+    class _FakeSegmentUrdu:
+        text = "آرر اور کالسیر"
+
+    class _FakeSegmentHindi:
+        text = "आयरन और कैल्शियम"
+
+    class _FakeInfoUrdu:
+        language = "ur"
+        language_probability = 0.54
+        duration = 1.5
+
+    class _FakeInfoHindi:
+        language = "hi"
+        language_probability = 0.88
+        duration = 1.5
+
+    class _FakeWhisperModel:
+        def __init__(self, *a, **kw):
+            pass
+
+        def transcribe(self, path, language=None, **kw):
+            call_log.append(language)
+            if language == "hi":
+                return iter([_FakeSegmentHindi()]), _FakeInfoHindi()
+            return iter([_FakeSegmentUrdu()]), _FakeInfoUrdu()
+
+    fake_mod = __import__("types").ModuleType("faster_whisper")
+    fake_mod.WhisperModel = _FakeWhisperModel
+    monkeypatch.setitem(sys.modules, "faster_whisper", fake_mod)
+    asr_module._MODEL_CACHE.clear()
+
+    result = transcribe_with_hindi_fallback(b"audio", model_name="tiny")
+
+    assert result.text == "आयरन और कैल्शियम"
+    assert result.language == "hi"
+    assert "hi" in call_log, "must have retried with language='hi'"

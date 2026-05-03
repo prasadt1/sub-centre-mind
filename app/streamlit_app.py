@@ -158,6 +158,25 @@ with tab_ask:
             "Local Whisper (faster-whisper, CPU). First use downloads the model. "
             "Transcript becomes the question below."
         )
+
+        _LANG_OPTIONS = {
+            "Hindi (हिन्दी)": "hi",
+            "Marathi (मराठी)": "mr",
+            "English": "en",
+            "Auto-detect": None,
+        }
+        selected_lang_label = st.selectbox(
+            "Spoken language",
+            options=list(_LANG_OPTIONS.keys()),
+            index=0,
+            help=(
+                "Choose the language you are speaking. "
+                "Selecting Hindi or Marathi prevents Whisper from mis-transcribing "
+                "to Urdu/Arabic script."
+            ),
+        )
+        selected_lang_code = _LANG_OPTIONS[selected_lang_label]
+
         try:
             audio = st.audio_input("Record a short query")
         except AttributeError:
@@ -167,16 +186,28 @@ with tab_ask:
         if audio is not None and st.button("Transcribe and use as question"):
             with st.spinner("Transcribing locally..."):
                 try:
-                    from voice import transcribe, ASRUnavailable
+                    from rag.lang import contains_arabic_script
+                    from voice import ASRUnavailable, transcribe_with_hindi_fallback
                     raw = audio.read() if hasattr(audio, "read") else audio.getvalue()
-                    res = transcribe(raw)
-                    st.session_state["ask_query"] = res.text
-                    st.session_state["ask_query_lang"] = res.language
-                    st.session_state["ask_query_lang_source"] = "asr"
-                    st.success(
-                        f"Transcribed ({res.language} · {res.language_probability:.2f}): "
-                        f"{res.text}"
-                    )
+                    if selected_lang_code is not None:
+                        from voice import transcribe as _transcribe
+                        res = _transcribe(raw, language=selected_lang_code)
+                    else:
+                        res = transcribe_with_hindi_fallback(raw)
+                    if contains_arabic_script(res.text):
+                        st.warning(
+                            f"Whisper returned Urdu/Arabic script "
+                            f"(detected: {res.language} · {res.language_probability:.2f}). "
+                            "Switch the language selector to **Hindi** and record again."
+                        )
+                    else:
+                        st.session_state["ask_query"] = res.text
+                        st.session_state["ask_query_lang"] = res.language
+                        st.session_state["ask_query_lang_source"] = "asr"
+                        st.success(
+                            f"Transcribed ({res.language} · {res.language_probability:.2f}): "
+                            f"{res.text}"
+                        )
                 except ASRUnavailable as e:
                     st.warning(str(e))
                 except Exception as e:

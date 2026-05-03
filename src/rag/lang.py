@@ -15,6 +15,17 @@ import re
 
 _DEVANAGARI_RANGE = re.compile(r"[\u0900-\u097F]")
 _LATIN_LETTER = re.compile(r"[A-Za-z]")
+_ARABIC_RANGE = re.compile(r"[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]")
+
+
+def contains_arabic_script(text: str) -> bool:
+    """Return True if *text* contains Arabic/Urdu Nastaliq characters.
+
+    Used to detect when Whisper has mis-classified a Hindi utterance as Urdu
+    and transcribed it into Arabic script rather than Devanagari. Covers the
+    core Arabic Unicode block plus Urdu-specific extended ranges.
+    """
+    return bool(_ARABIC_RANGE.search(text)) if text else False
 
 # Common Marathi-only function words / inflections (rough — overlaps exist).
 _MARATHI_HINTS = (

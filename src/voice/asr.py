@@ -55,6 +55,36 @@ def _load_model(name: str):
     return model
 
 
+def transcribe_with_hindi_fallback(
+    audio_bytes: bytes,
+    *,
+    model_name: Optional[str] = None,
+    audio_suffix: str = ".wav",
+) -> "TranscriptionResult":
+    """Transcribe audio, retrying with language='hi' if Urdu script is detected.
+
+    Whisper's `tiny` model frequently mis-classifies Hindi speech as Urdu (ISO
+    639-1: `ur`) when confidence is low, producing Arabic/Nastaliq script output
+    that cannot match the Devanagari/English corpus. This wrapper detects that
+    case and retries with an explicit Hindi hint so the result is Devanagari.
+
+    Falls through to the plain `transcribe()` result when no Arabic script is
+    detected. Safe to call for all languages — non-Urdu outputs are returned
+    unchanged.
+    """
+    from rag.lang import contains_arabic_script  # lazy to avoid circular import
+
+    result = transcribe(audio_bytes, model_name=model_name, audio_suffix=audio_suffix)
+    if contains_arabic_script(result.text):
+        result = transcribe(
+            audio_bytes,
+            model_name=model_name,
+            language="hi",
+            audio_suffix=audio_suffix,
+        )
+    return result
+
+
 def transcribe(
     audio_bytes: bytes,
     *,

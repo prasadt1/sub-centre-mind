@@ -12,7 +12,7 @@ for p in (_SRC, _REPO):
     if s not in sys.path:
         sys.path.insert(0, s)
 
-from rag.lang import detect_language, expand_query_for_retrieval, normalise_asr_transcript
+from rag.lang import contains_arabic_script, detect_language, expand_query_for_retrieval, normalise_asr_transcript
 
 
 def test_empty_returns_unknown() -> None:
@@ -145,3 +145,27 @@ def test_normalise_calcium_variant_kalseeyam() -> None:
     # कल्सियम — no anusvara + s variant
     result = normalise_asr_transcript("कल्सियम टेबलेट")
     assert "calcium" in result.lower()
+
+
+# --- contains_arabic_script ---
+
+def test_arabic_script_detected_in_urdu_transcription() -> None:
+    # Actual failing transcription: Whisper output in Nastaliq/Urdu script
+    urdu_text = "آرر اور کالسیر کی کمی کے لئے کیا کرے؟"
+    assert contains_arabic_script(urdu_text) is True
+
+
+def test_arabic_script_false_for_devanagari() -> None:
+    assert contains_arabic_script("आईरन और कल्शीम की कमी के लिए क्या करें?") is False
+
+
+def test_arabic_script_false_for_english() -> None:
+    assert contains_arabic_script("IFA schedule in pregnancy") is False
+
+
+def test_arabic_script_false_for_mixed_devanagari_english() -> None:
+    assert contains_arabic_script("IFA dose गर्भवती महिलांसाठी आहे") is False
+
+
+def test_arabic_script_false_for_empty() -> None:
+    assert contains_arabic_script("") is False

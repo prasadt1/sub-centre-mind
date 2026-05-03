@@ -5,6 +5,52 @@ Format: `[YYYY-MM-DD] <type>: <title>` — type is `fix`, `feat`, or `chore`.
 
 ---
 
+## [2026-05-03] fix: Whisper Hindi/Urdu mis-classification outputs Arabic script
+
+**Issue**
+Voice query transcribed as `ur · 0.54` (Urdu, 54% confidence) in Arabic/Nastaliq
+script: `"آرر اور کالسیر کی کمی کے لئے کیا کرے؟"`. The FAISS corpus contains no
+Arabic-script text, so similarity scores collapsed and the gate blocked the query
+regardless of normalisation.
+
+**Root cause**
+Whisper's `tiny` model confuses Hindi and Urdu at low confidence — both languages
+share the same spoken form but use different scripts (Devanagari vs Nastaliq).
+The app called `transcribe(raw)` with no language hint, allowing Whisper to
+auto-detect freely. At 0.54 confidence the wrong script was chosen.
+
+**Fix — three layers**
+
+1. **`src/rag/lang.py` — `contains_arabic_script(text)`**: new utility using
+   Unicode range detection (U+0600–U+06FF plus extended Urdu ranges). Returns
+   `True` when Whisper has emitted Nastaliq/Arabic-script output.
+
+2. **`src/voice/asr.py` — `transcribe_with_hindi_fallback()`**: new wrapper that
+   calls `transcribe()` without a language hint, checks the output with
+   `contains_arabic_script`, and if Arabic script is found automatically retries
+   with `language="hi"` to force Devanagari output.
+
+3. **`app/streamlit_app.py` — language selector in voice input expander**:
+   - Added a `selectbox` (Hindi / Marathi / English / Auto-detect), defaulting to
+     **Hindi** since the target users are ANMs speaking Hindi/Marathi.
+   - When a specific language is selected, `transcribe(raw, language=code)` is
+     called directly — Whisper never auto-detects.
+   - When "Auto-detect" is chosen, `transcribe_with_hindi_fallback()` is used as
+     the safety net.
+   - If Arabic script is detected in any output, a clear warning is shown and the
+     transcript is **not** placed in the query box (prevents a known-bad query from
+     silently reaching retrieval).
+
+**Tests added**
+- `test_arabic_script_detected_in_urdu_transcription` (test_lang.py)
+- `test_arabic_script_false_for_devanagari/english/mixed/empty` (test_lang.py)
+- `test_transcribe_urdu_output_retries_as_hindi` (test_voice.py) — verifies the
+  retry fires with `language="hi"` and returns Devanagari text.
+
+60 passed, 1 skipped.
+
+---
+
 ## [2026-05-03] fix: normalisation not applied in app default path + missing calcium variants
 
 **Issue**
