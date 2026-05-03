@@ -94,23 +94,24 @@ def test_gate_blocks_weak_retrieval_no_http(monkeypatch, tmp_path):
 
     monkeypatch.setattr(gen, "retrieve", fake_retrieve)
 
-    called = {"posts": 0}
+    called = {"generates": 0}
 
-    def fake_post(*a, **kw):
-        called["posts"] += 1
-        raise AssertionError("Ollama must not be called when gate blocks")
+    class _NoCallBackend:
+        def generate(self, *a, **kw):
+            called["generates"] += 1
+            raise AssertionError("Backend must not be called when gate blocks")
 
-    monkeypatch.setattr(gen.requests, "post", fake_post)
+    monkeypatch.setattr(gen, "get_backend", lambda: _NoCallBackend())
     monkeypatch.setenv("SCM_CONFIDENCE_GATE", "1")
     monkeypatch.setenv("SCM_RETRIEVAL_MIN_SIM", "0.7")
 
     out = gen.generate_answer("anything", index_dir=tmp_path)
     assert out.confidence_blocked is True
-    assert called["posts"] == 0
+    assert called["generates"] == 0
     assert "No sufficiently confident match" in out.answer
 
 
-def test_gate_passes_calls_ollama_and_parses(monkeypatch, tmp_path):
+def test_gate_passes_calls_backend_and_parses(monkeypatch, tmp_path):
     gen = _import_generate(monkeypatch)
     rq = sys.modules["rag.query"]
 
@@ -126,23 +127,15 @@ def test_gate_passes_calls_ollama_and_parses(monkeypatch, tmp_path):
 
     captured = {}
 
-    class FakeResp:
-        def __init__(self, payload):
-            self._payload = payload
+    class _FakeBackend:
+        def generate(self, prompt, *, model, options=None, timeout=180.0):
+            captured["prompt"] = prompt
+            captured["model"] = model
+            captured["options"] = options
+            captured["timeout"] = timeout
+            return "Take 1 IFA tablet daily during ANC."
 
-        def raise_for_status(self):
-            return None
-
-        def json(self):
-            return self._payload
-
-    def fake_post(url, json, timeout):
-        captured["url"] = url
-        captured["json"] = json
-        captured["timeout"] = timeout
-        return FakeResp({"response": "Take 1 IFA tablet daily during ANC."})
-
-    monkeypatch.setattr(gen.requests, "post", fake_post)
+    monkeypatch.setattr(gen, "get_backend", lambda: _FakeBackend())
     monkeypatch.delenv("SCM_CONFIDENCE_GATE", raising=False)
     monkeypatch.setenv("SCM_RETRIEVAL_MIN_SIM", "0.7")
 
@@ -151,7 +144,6 @@ def test_gate_passes_calls_ollama_and_parses(monkeypatch, tmp_path):
     assert out.confidence_blocked is False
     assert out.answer == "Take 1 IFA tablet daily during ANC."
     assert "MoHFW-IFA.pdf" in out.citations
-    assert captured["url"].endswith("/api/generate")
-    assert captured["json"]["think"] is False
-    assert captured["json"]["options"]["num_predict"] == 64
-    assert "Take 1 IFA tablet" not in captured["json"]["prompt"]
+    assert captured["options"].think is False
+    assert captured["options"].num_predict == 64
+    assert "Take 1 IFA tablet" not in captured["prompt"]

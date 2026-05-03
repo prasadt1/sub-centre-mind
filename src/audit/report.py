@@ -7,7 +7,6 @@ and the Streamlit app.
 from __future__ import annotations
 
 import json
-import os
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -66,7 +65,7 @@ def template_summary(stats: dict[str, Any]) -> str:
 
 def llm_narrative(stats: dict[str, Any], *, model: str, timeout: float = 120.0) -> str:
     """Optional Gemma narrative over the aggregate stats."""
-    import requests  # local import keeps this module import-light for tests
+    from llm import GenerateOptions, get_backend
 
     prompt = (
         "You are drafting an internal monthly summary for a rural sub-centre in India.\n"
@@ -74,17 +73,10 @@ def llm_narrative(stats: dict[str, Any], *, model: str, timeout: float = 120.0) 
         "Output 4 short bullet points + one line disclaimer that this is not an official HMIS report.\n\n"
         f"Statistics JSON:\n{json.dumps(stats, indent=2)}\n"
     )
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "think": False,
-        "stream": False,
-        "options": {"num_predict": 220, "temperature": 0.2},
-    }
-    r = requests.post(
-        os.environ.get("OLLAMA_GENERATE_URL", "http://localhost:11434/api/generate"),
-        json=payload,
+    backend = get_backend()
+    return backend.generate(
+        prompt,
+        model=model,
+        options=GenerateOptions(num_predict=220, temperature=0.2),
         timeout=timeout,
     )
-    r.raise_for_status()
-    return (r.json().get("response") or "").strip()

@@ -16,9 +16,7 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-import requests
-
-OLLAMA_CHAT_URL = os.environ.get("OLLAMA_CHAT_URL", "http://localhost:11434/api/chat")
+from llm import GenerateOptions, get_backend
 
 
 @dataclass(frozen=True)
@@ -29,24 +27,16 @@ class VisionResult:
     boundary_note: str
 
 
-def _post_chat(image_bytes: bytes, *, prompt: str, model: str, num_predict: int, timeout: float) -> str:
+def _post_vision(image_bytes: bytes, *, prompt: str, model: str, num_predict: int, timeout: float) -> str:
     b64 = base64.b64encode(image_bytes).decode()
-    payload = {
-        "model": model,
-        "stream": False,
-        "think": False,
-        "messages": [
-            {"role": "user", "content": prompt, "images": [b64]},
-        ],
-        "options": {"num_predict": num_predict, "temperature": 0.1},
-    }
-    r = requests.post(OLLAMA_CHAT_URL, json=payload, timeout=timeout)
-    r.raise_for_status()
-    data = r.json()
-    if data.get("error"):
-        raise RuntimeError(f"Ollama vision error: {data['error']}")
-    msg = data.get("message") or {}
-    return (msg.get("content") or "").strip()
+    backend = get_backend()
+    return backend.vision(
+        b64,
+        prompt,
+        model=model,
+        options=GenerateOptions(num_predict=num_predict, temperature=0.1),
+        timeout=timeout,
+    )
 
 
 def analyze_image(
@@ -61,7 +51,7 @@ def analyze_image(
 ) -> VisionResult:
     """Generic image-to-text via Gemma 4 vision (Ollama)."""
     mdl = model or os.environ.get("SCM_MODEL", "gemma4:latest")
-    text = _post_chat(
+    text = _post_vision(
         image_bytes,
         prompt=prompt,
         model=mdl,

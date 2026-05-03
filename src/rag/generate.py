@@ -12,8 +12,7 @@ _SRC_DIR = str(_SRC_ROOT)
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-import requests
-
+from llm import GenerateOptions, get_backend
 from rag.gate import should_skip_generation
 from rag.intent import SupplementIntent, detect_supplement_intent
 from rag.lang import expand_query_for_retrieval, normalise_asr_transcript
@@ -107,24 +106,21 @@ def generate_answer(
 
     prompt = _build_prompt(user_query, retrieved)
 
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "think": think,
-        "stream": False,
-        "options": {"num_predict": num_predict, "temperature": temperature},
-    }
-
     timeout_s = float(os.environ.get("SCM_OLLAMA_TIMEOUT", "180"))
-    ollama_url = os.environ.get(
-        "OLLAMA_GENERATE_URL", "http://localhost:11434/api/generate"
+    backend = get_backend()
+    answer_text = backend.generate(
+        prompt,
+        model=model,
+        options=GenerateOptions(
+            num_predict=num_predict,
+            temperature=temperature,
+            think=think,
+        ),
+        timeout=timeout_s,
     )
-    resp = requests.post(ollama_url, json=payload, timeout=timeout_s)
-    resp.raise_for_status()
-    data = resp.json()
 
     return RAGAnswer(
-        answer=(data.get("response") or "").strip(),
+        answer=answer_text,
         citations=format_citations(retrieved),
         retrieved=list(retrieved),
         confidence_blocked=False,

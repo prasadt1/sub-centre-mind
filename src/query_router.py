@@ -17,12 +17,9 @@ _SRC = Path(__file__).resolve().parent
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-import requests
-
+from llm import ChatMessage, GenerateOptions, get_backend
 from rag.lang import expand_query_for_retrieval, normalise_asr_transcript
 from rag.query import RetrievedChunk, format_citations, retrieve
-
-OLLAMA_CHAT_URL = os.environ.get("OLLAMA_CHAT_URL", "http://localhost:11434/api/chat")
 
 TOOLS: List[Dict[str, Any]] = [
     {
@@ -147,23 +144,19 @@ def orchestrate_query(
     system_content = _system_instructions(retrieved=retrieved, retrieval_weak=retrieval_weak)
     mdl = model or os.environ.get("SCM_MODEL", "gemma4:latest")
 
-    payload: Dict[str, Any] = {
-        "model": mdl,
-        "think": think,
-        "stream": False,
-        "messages": [
-            {"role": "system", "content": system_content},
-            {"role": "user", "content": q or "(empty query)"},
+    backend = get_backend()
+    chat_resp = backend.chat(
+        [
+            ChatMessage(role="system", content=system_content),
+            ChatMessage(role="user", content=q or "(empty query)"),
         ],
-        "tools": TOOLS,
-    }
-
-    resp = requests.post(OLLAMA_CHAT_URL, json=payload, timeout=timeout)
-    resp.raise_for_status()
-    data = resp.json()
-    msg = data.get("message") or {}
-    tool_calls = msg.get("tool_calls") or []
-    text = (msg.get("content") or "").strip()
+        model=mdl,
+        tools=TOOLS,
+        options=GenerateOptions(think=think),
+        timeout=timeout,
+    )
+    tool_calls = chat_resp.tool_calls
+    text = chat_resp.content
 
     tool_name: Optional[str] = None
     tool_args: Dict[str, Any] = {}
