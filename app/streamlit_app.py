@@ -48,7 +48,7 @@ from vision import (
 
 # --- paths / defaults --------------------------------------------------------
 DEFAULT_INDEX_DIR = Path(os.environ.get("SCM_INDEX_DIR", "data/index"))
-DEFAULT_AUDIT_LOG = Path(os.environ.get("SCM_AUDIT_LOG", "data/logs/dev_events.jsonl"))
+DEFAULT_AUDIT_LOG = Path(os.environ.get("SCM_AUDIT_LOG", "data/logs/sample_events.jsonl"))
 DEFAULT_NUDGE_STORE = Path(os.environ.get("SCM_NUDGE_STORE", "data/nudges/store.json"))
 DEFAULT_MIN_SIM = float(os.environ.get("SCM_RETRIEVAL_MIN_SIM", "0.7"))
 DEFAULT_NUM_PREDICT = int(os.environ.get("SCM_NUM_PREDICT", "220"))
