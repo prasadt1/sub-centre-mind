@@ -1,7 +1,7 @@
 {
   "version": "0.1",
   "description": "Decision Boundary Card for Sub-Centre Mind — defines what Gemma 4 E4B answers, refuses, and escalates",
-  "last_updated": "2026-05-02",
+  "last_updated": "2026-05-03",
   "answerable": [
     {
       "query": "IFA tablet dose for pregnant women",
