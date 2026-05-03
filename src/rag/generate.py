@@ -16,6 +16,7 @@ import requests
 
 from rag.gate import should_skip_generation
 from rag.intent import SupplementIntent, detect_supplement_intent
+from rag.lang import expand_query_for_retrieval, normalise_asr_transcript
 from rag.query import RetrievedChunk, format_citations, retrieve
 
 
@@ -91,7 +92,8 @@ def generate_answer(
 ) -> RAGAnswer:
     if num_predict is None:
         num_predict = int(os.environ.get("SCM_NUM_PREDICT", str(DEFAULT_NUM_PREDICT)))
-    retrieved = retrieve(user_query, index_dir=index_dir, top_k=top_k)
+    retrieval_q = expand_query_for_retrieval(normalise_asr_transcript(user_query))
+    retrieved = retrieve(retrieval_q, index_dir=index_dir, top_k=top_k)
 
     gate_on = os.environ.get("SCM_CONFIDENCE_GATE", "1").strip().lower() not in ("0", "false", "no")
     min_sim = float(os.environ.get("SCM_RETRIEVAL_MIN_SIM", str(DEFAULT_MIN_SIM)))

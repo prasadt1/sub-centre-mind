@@ -126,3 +126,22 @@ def test_normalise_empty_unchanged() -> None:
 def test_normalise_english_unchanged() -> None:
     q = "IFA schedule in pregnancy"
     assert normalise_asr_transcript(q) == q
+
+
+def test_normalise_calcium_variant_kalsheem() -> None:
+    # Long-ī form: कल्शीम — the specific variant in the failing query
+    result = normalise_asr_transcript("आईरन और कल्शीम की कमी के लिए क्या करें?")
+    assert "calcium" in result.lower()
+    assert "iron" in result
+
+
+def test_normalise_calcium_variant_kailshiyam() -> None:
+    # कैल्सियम — s variant (ś→s)
+    result = normalise_asr_transcript("कैल्सियम की खुराक क्या है?")
+    assert "calcium" in result.lower()
+
+
+def test_normalise_calcium_variant_kalseeyam() -> None:
+    # कल्सियम — no anusvara + s variant
+    result = normalise_asr_transcript("कल्सियम टेबलेट")
+    assert "calcium" in result.lower()

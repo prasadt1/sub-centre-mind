@@ -5,6 +5,54 @@ Format: `[YYYY-MM-DD] <type>: <title>` — type is `fix`, `feat`, or `chore`.
 
 ---
 
+## [2026-05-03] fix: normalisation not applied in app default path + missing calcium variants
+
+**Issue**
+Retried the voice query in the Streamlit app with `"आईरन और कल्शीम की कमी के लिए क्या करें?"`.
+Score was 0.639 (still below 0.70 gate), despite the earlier fix.
+
+**Root cause (two separate bugs)**
+
+1. **`rag/generate.py` bypassed normalisation** — the app's default Ask tab calls
+   `generate_answer()` from `rag.generate`, which called `retrieve(user_query, ...)`
+   directly without going through `normalise_asr_transcript` or
+   `expand_query_for_retrieval`. The fix from the previous commit only wired those
+   into `query_router.py`, which is only used when the "tool-calling" checkbox is
+   enabled. The partial score improvement (0.562 → 0.639) was solely from
+   `आईरन`→`iron` being normalised via `query_router` in some path, while
+   `कल्शीम` went through `generate_answer` untouched.
+
+2. **`"कल्शीम"` variant missing from map** — Whisper produced the long-ī form
+   `कल्शीम` (कल् + शीम) rather than `कल्शियम`. Four additional calcium phonetic
+   variants were also absent: `कैल्शीम`, `कल्सियम`, `कैल्सियम`.
+
+**Fix**
+
+`src/rag/generate.py` — `generate_answer()` now normalises before retrieval:
+```python
+retrieval_q = expand_query_for_retrieval(normalise_asr_transcript(user_query))
+retrieved = retrieve(retrieval_q, index_dir=index_dir, top_k=top_k)
+```
+`user_query` is still passed unchanged to `_build_prompt` and Ollama.
+
+`src/rag/lang.py` — added 4 calcium variants to `_ASR_NORMALISE_MAP`:
+`कल्शीम`, `कैल्शीम`, `कल्सियम`, `कैल्सियम`.
+
+New test `test_generate_answer_normalises_asr_before_retrieve` in
+`tests/test_generate_integration.py` verifies the integration by capturing
+the query passed to `retrieve()` and asserting `iron` and `calcium` appear.
+
+**Verified scores**
+
+| Query | Before (this fix) | After |
+|-------|-------------------|-------|
+| `आईरन और कल्शीम की कमी...` | 0.639 | **0.778** |
+| `आईरन और कल्छिम की कमी...` | 0.778 | 0.778 |
+
+54 passed, 1 skipped.
+
+---
+
 ## [2026-05-03] fix: Hindi ASR voice query blocked — phonetic Devanagari mis-transcriptions
 
 **Issue**

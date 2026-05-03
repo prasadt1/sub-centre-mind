@@ -59,6 +59,33 @@ def _import_generate(monkeypatch):
     return importlib.import_module("rag.generate")
 
 
+def test_generate_answer_normalises_asr_before_retrieve(monkeypatch, tmp_path):
+    """generate_answer must pass normalised+expanded text to retrieve(), not raw user query."""
+    gen = _import_generate(monkeypatch)
+
+    captured = {}
+
+    def fake_retrieve(query, *, index_dir, top_k=5):
+        captured["query"] = query
+        return []
+
+    monkeypatch.setattr(gen, "retrieve", fake_retrieve)
+    monkeypatch.setenv("SCM_CONFIDENCE_GATE", "0")
+
+    gen.generate_answer(
+        "आईरन और कल्शीम की कमी के लिए क्या करें?",
+        index_dir=tmp_path,
+    )
+
+    retrieval_q = captured.get("query", "")
+    assert "iron" in retrieval_q, (
+        f"'iron' must appear in retrieval query; got: {retrieval_q!r}"
+    )
+    assert "calcium" in retrieval_q.lower(), (
+        f"'calcium' must appear in retrieval query; got: {retrieval_q!r}"
+    )
+
+
 def test_gate_blocks_weak_retrieval_no_http(monkeypatch, tmp_path):
     gen = _import_generate(monkeypatch)
 

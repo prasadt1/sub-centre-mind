@@ -60,9 +60,13 @@ _HINDI_HINTS = (
 _ASR_NORMALISE_MAP: dict[str, str] = {
     "आईरन":      "iron",        # "iron" spoken in Hindi context
     "आयरन":      "iron",        # alternative phonetic form
-    "कल्छिम":    "calcium",     # "calcium" — common Whisper mis-transcription
+    "कल्छिम":    "calcium",     # Whisper mis-transcription (palatalised)
+    "कल्शीम":    "calcium",     # long-ī truncated form (कल् + शीम)
     "कल्शियम":   "calcium",     # closer phonetic form
+    "कैल्शीम":   "calcium",     # anusvara + long-ī form
     "कैल्शियम":  "calcium",     # standard Hindi spelling → normalise to English
+    "कल्सियम":   "calcium",     # s-variant (ś→s), no anusvara
+    "कैल्सियम":  "calcium",     # s-variant with anusvara
     "हेमोग्लोबिन": "haemoglobin",
     "एनीमिया":   "anaemia",
     "अनीमिया":   "anaemia",
