@@ -13,9 +13,9 @@
 
 ---
 
-**Why it matters.** India has roughly **170,000 Sub-Centres** (now being upgraded to [Ayushman Arogya Mandirs](https://sansad.in/getFile/loksabhaquestions/annex/187/AU1365_H1B8B8.pdf?source=pqals), each serving 3,000–5,000 patients and staffed by at least one ANM ([Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife)) — often the sole qualified health worker at the facility. She has no doctor within reach, a stack of paper registers to fill, and protocols that span hundreds of pages of MoHFW (Ministry of Health and Family Welfare) guidelines. When she's unsure — about an IFA (Iron and Folic Acid) dose, a danger sign, a refusal boundary — there is no one to ask. With the ongoing AAM (Ayushman Arogya Mandir) transformation expanding ANM responsibilities to NCD (Non-Communicable Disease) screening, the need for protocol-grounded decision support is growing, not shrinking.
+**Why it matters.** India has roughly **170,000 [Sub-Centres](https://en.wikipedia.org/wiki/Public_health_system_in_India#Sub_Centres)** — the smallest **peripheral** government health facilities in the rural primary-care chain (typically staffed by at least one ANM; **Primary Health Centres** with a doctor sit one tier above — see [Primary Health Centre (India)](https://en.wikipedia.org/wiki/Primary_Health_Centre_(India))). Many are being upgraded to [Ayushman Arogya Mandirs](https://sansad.in/getFile/loksabhaquestions/annex/187/AU1365_H1B8B8.pdf?source=pqals). Each Sub-Centre serves about **3,000–5,000** people and is staffed by at least one ANM ([Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife)) — often the sole qualified health worker at that post. She has no doctor within reach, a stack of paper registers to fill, and protocols that span hundreds of pages of MoHFW (Ministry of Health and Family Welfare) guidelines. When she's unsure — about an IFA (Iron and Folic Acid) dose, a danger sign, a refusal boundary — there is no one to ask. With the ongoing AAM (Ayushman Arogya Mandir) transformation expanding ANM responsibilities to NCD (Non-Communicable Disease) screening, the need for protocol-grounded decision support is growing, not shrinking.
 
-**What we built.** A local-first clinical co-pilot that runs entirely on the ANM's own device. It answers safe protocol questions (IFA dosing, ANC (Antenatal Care) schedules, immunization), refuses diagnostic overreach with a deterministic, machine-readable contract, sends closed-loop nudges for IFA compliance, and drafts supervisor reports from an audit trail — all without a single byte of PHI (Protected Health Information) leaving the sub-centre.
+**What I built.** A local-first clinical co-pilot that runs entirely on the ANM's own device. It answers safe protocol questions (IFA dosing, ANC (Antenatal Care) schedules, immunization), refuses diagnostic overreach with a deterministic, machine-readable contract, sends closed-loop nudges for IFA compliance, and drafts supervisor reports from an audit trail — all without a single byte of PHI (Protected Health Information) leaving the sub-centre.
 
 **The differentiator.** The [Decision Boundary Card](#-decision-boundary-card) — a machine-readable specification of exactly what the model answers, refuses, and escalates. Not a vague "it will be safe" claim; a versioned contract with 16 answerable entries and 16 refusal triggers, verifiable in 5 minutes.
 
@@ -38,7 +38,7 @@
 ## Contents
 
 - [The Problem](#the-problem)
-- [What We Built](#what-we-built)
+- [What I Built](#what-i-built)
 - [Gate 1 Status](#-gate-1-status)
 - [Decision Boundary Card](#-decision-boundary-card)
 - [Architecture](#architecture)
@@ -48,7 +48,7 @@
 - [Engineering Quality](#engineering-quality)
 - [Project Structure](#project-structure)
 - [Prior Art & Differentiation](#prior-art--differentiation)
-- [What We Refuse to Claim](#what-we-refuse-to-claim)
+- [What I Refuse to Claim](#what-i-refuse-to-claim)
 - [Hard Constraints](#hard-constraints)
 - [Roadmap](#roadmap)
 - [Engineering Lineage](#engineering-lineage)
@@ -60,7 +60,7 @@
 
 ## The Problem
 
-India's [Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife) (ANM) is the frontline of maternal and child health for 3,000–5,000 patients per sub-centre — the trained nurse–midwife cadre that links rural communities to India's primary health system. She faces three compounding gaps:
+India's [Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife) (ANM) is the frontline of maternal and child health for 3,000–5,000 patients per **[Sub-Centre](https://en.wikipedia.org/wiki/Public_health_system_in_India#Sub_Centres)** — the trained nurse–midwife cadre that links rural communities to India's primary health system. She faces three compounding gaps:
 
 | Gap | Reality |
 |-----|---------|
@@ -72,7 +72,7 @@ Previous tools either require connectivity, expose PHI to the cloud, or add data
 
 ---
 
-## What We Built
+## What I Built
 
 A **local-first, offline-capable** clinical decision support system with five interlocking components:
 
@@ -332,17 +332,17 @@ Previous Gemma hackathon winners (e.g., ASHA-G) tackled field-worker **digitizat
 
 ---
 
-## What We Refuse to Claim
+## What I Refuse to Claim
 
 To maintain intellectual honesty in a complex global health domain, this project explicitly does **not** attempt to solve:
 
 - Physical transport logistics or supply chain for IFA/calcium tablets
 - Sub-centre facility capacity or infrastructure gaps
-- ASHA compensation models or incentive structures
+- [ASHA](https://en.wikipedia.org/wiki/Accredited_Social_Health_Activist) (Accredited Social Health Activist) compensation models or incentive structures
 - Household decision-making dynamics or demand-side barriers
 - Clinical diagnosis — the system categorically refuses and escalates
 
-We provide grounded decision support for a single professional (the ANM). We do not replace clinical judgment.
+I provide grounded decision support for a single professional (the ANM). I do not replace clinical judgment.
 
 ---
 
@@ -393,6 +393,7 @@ The core insight transfers exactly: *advice without follow-through accountabilit
 | **AAM** | Ayushman Arogya Mandir — upgraded sub-centre model under India's national health mission |
 | **ANC** | Antenatal Care — routine pregnancy check-ups |
 | **ANM** | [Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife) — trained nurse–midwife staffing sub-centres; bridge between community and facility care (India) |
+| **ASHA** | [Accredited Social Health Activist](https://en.wikipedia.org/wiki/Accredited_Social_Health_Activist) — village-level community health worker linked to the public system (not the same role as an ANM) |
 | **ASR** | Automatic Speech Recognition — converts voice to text |
 | **BM25** | Best Matching 25 — keyword-based text retrieval algorithm |
 | **FAISS** | Facebook AI Similarity Search — vector similarity library |
@@ -405,11 +406,13 @@ The core insight transfers exactly: *advice without follow-through accountabilit
 | **NCD** | Non-Communicable Disease — e.g. diabetes, hypertension |
 | **NHM** | National Health Mission — India's umbrella public health programme |
 | **NHSRC** | National Health Systems Resource Centre — technical support body under NHM |
+| **PHC** | [Primary Health Centre (India)](https://en.wikipedia.org/wiki/Primary_Health_Centre_(India)) — facility tier above Sub-Centres; usually has a doctor (Medical Officer) |
 | **PHI** | Protected Health Information — any patient-identifiable data |
 | **RAG** | Retrieval-Augmented Generation — grounds LLM output in retrieved source documents |
 | **RCH** | Reproductive and Child Health — sub-programme and data register used by ANMs |
 | **RRF** | Reciprocal Rank Fusion — method for combining multiple ranked retrieval lists |
 | **SBA** | Skilled Birth Attendance — training programme for safe delivery practices |
+| **Sub-Centre (SC)** | [Sub-Centre](https://en.wikipedia.org/wiki/Public_health_system_in_India#Sub_Centres) — India's most peripheral government primary-care post; ANM-led, ~3k–5k population (norms vary by terrain) |
 | **TT** | Tetanus Toxoid — vaccine given during pregnancy |
 
 ---

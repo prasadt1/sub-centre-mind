@@ -7,7 +7,7 @@
 
 ## Context
 
-Sub-Centre Mind is clinical decision support for India's roughly **170,000 Sub-Centres** (now being upgraded to Ayushman Arogya Mandirs / AAMs), each serving 3,000–5,000 patients and staffed by at least one ANM ([Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife)) — often the sole qualified health worker at the facility. The system must run **entirely on-device** — no PHI (Protected Health Information) may leave the sub-centre.
+Sub-Centre Mind is clinical decision support for India's roughly **170,000 [Sub-Centres](https://en.wikipedia.org/wiki/Public_health_system_in_India#Sub_Centres)** — the most peripheral government primary-care posts (see [Primary Health Centre (India)](https://en.wikipedia.org/wiki/Primary_Health_Centre_(India)) for the tier above) — many now being upgraded to Ayushman Arogya Mandirs / AAMs. Each serves 3,000–5,000 patients and is staffed by at least one ANM ([Auxiliary Nurse Midwife](https://en.wikipedia.org/wiki/Auxiliary_nurse_midwife)) — often the sole qualified health worker at the facility. The system must run **entirely on-device** — no PHI (Protected Health Information) may leave the sub-centre.
 
 The Gate 1 prototype (verified May 3, 2026) runs on a $200 mini-PC via Ollama. This works for judging and desktop demos, but the $200 CAPEX per sub-centre + sysadmin maintenance creates a barrier to adoption that undermines the product's mission. Government procurement in rural India is slow, underfunded, and prone to leakage; asking for 170,000 dedicated devices is a non-starter.
 
