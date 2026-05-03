@@ -113,18 +113,20 @@ Phase 1 (current, Gate 1) — Option 1 LOCKED
 Phase 2 (May 4–12) — Build LLM abstraction layer
     Extract LLMBackend Protocol (generate, chat, vision).
     Implement OllamaBackend (refactor existing ~50 lines).
-    Implement CactusBackend (stub → real).
+    Implement CactusBackend (Ollama-compatible HTTP bridge; see Phase 3a).
     Feature flag: SCM_BACKEND=ollama | cactus (default: ollama).
     Existing tests run against OllamaBackend unchanged.
 
 Phase 3 (May 8–15) — Cactus proof-of-concept
-    Cactus SDK integration (Python first via pip install cactus-ai).
-    Port embeddings: model.embed() replaces sentence-transformers.
-    Port vector search: CactusIndex replaces FAISS.
-    Port Auto-RAG or keep custom retrieval with CactusIndex low-level API.
-    Validate retrieval quality: Hindi ≥0.7, Marathi ≥0.7.
-    Validate refusal contract: 5/5 refusals still fire.
-    Validate latency: ≤12s.
+    **3a — LLM bridge (done in-repo):** ``CactusBackend`` targets ``SCM_CACTUS_HTTP_BASE`` and
+    uses the same JSON as Ollama's ``/api/generate`` and ``/api/chat`` so a native
+    Android companion can wrap libcactus / ``CactusLM`` without changing Python call sites.
+    (There is no supported ``pip install cactus-ai`` for desktop; Cactus remains Kotlin/Flutter/C++.)
+    **3b — Companion app:** Kotlin service (localhost + ``adb reverse``) or LAN binding that
+    forwards completions to Cactus native APIs; optional shim on desktop for CI.
+    **3c — Retrieval on Cactus (later / parallel):** port embeddings (``model.embed()``),
+    ``CactusIndex`` / Auto-RAG vs keep FAISS+BM25 on Pi or phone; validate Hindi/Marathi ≥0.7,
+    refusal contract 5/5, latency ≤12s before switching production traffic.
 
 Phase 4 (May 12–16) — ANM-facing UI
     Simple mobile interface (Kotlin via Cactus Android SDK or React Native).

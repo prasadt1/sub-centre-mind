@@ -1,4 +1,4 @@
-"""LLM backend abstraction — swap Ollama / Cactus / LiteRT without touching the moat.
+"""LLM backend abstraction — swap Ollama / Cactus without touching the moat.
 
 Usage:
     from llm import get_backend
@@ -6,6 +6,9 @@ Usage:
     text = backend.generate(...)
     msg  = backend.chat(...)
     text = backend.vision(...)
+
+``SCM_BACKEND=cactus`` requires ``SCM_CACTUS_HTTP_BASE`` (Ollama-compatible HTTP
+bridge to on-device Cactus). See ``src/llm/cactus.py`` and ADR-0001 Phase 3.
 """
 
 from .backend import (

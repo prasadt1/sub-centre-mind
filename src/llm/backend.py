@@ -84,6 +84,8 @@ def get_backend(name: str | None = None) -> LLMBackend:
     """Return the backend selected by *name* or ``SCM_BACKEND`` env var.
 
     Supported values: ``ollama`` (default), ``cactus``.
+
+    ``cactus`` requires ``SCM_CACTUS_HTTP_BASE`` (Ollama-compatible bridge URL).
     """
     backend_name = (name or os.environ.get("SCM_BACKEND", "ollama")).strip().lower()
 
