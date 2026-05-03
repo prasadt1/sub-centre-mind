@@ -13,9 +13,9 @@
 
 ---
 
-**Why it matters.** India has ~250,000 sub-centres, each managed by a single ANM responsible for 3,000–5,000 patients. She has no doctor within reach, a stack of paper registers to fill, and protocols that span hundreds of pages of MoHFW guidelines. When she's unsure — about an IFA dose, a danger sign, a refusal boundary — there is no one to ask.
+**Why it matters.** India has roughly **170,000 Sub-Centres** (now being upgraded to Ayushman Arogya Mandirs), each serving 3,000–5,000 patients and staffed by at least one ANM (Auxiliary Nurse Midwife) — often the sole qualified health worker at the facility. She has no doctor within reach, a stack of paper registers to fill, and protocols that span hundreds of pages of MoHFW (Ministry of Health and Family Welfare) guidelines. When she's unsure — about an IFA (Iron and Folic Acid) dose, a danger sign, a refusal boundary — there is no one to ask. With the ongoing AAM (Ayushman Arogya Mandir) transformation expanding ANM responsibilities to NCD (Non-Communicable Disease) screening, the need for protocol-grounded decision support is growing, not shrinking.
 
-**What we built.** A local-first clinical co-pilot that runs entirely on a ₹15,000 edge device. It answers safe protocol questions (IFA, ANC, immunization), refuses diagnostic overreach with a deterministic, machine-readable contract, sends closed-loop nudges for IFA compliance, and drafts supervisor reports from an audit trail — all without a single byte of PHI leaving the sub-centre.
+**What we built.** A local-first clinical co-pilot that runs entirely on the ANM's own device. It answers safe protocol questions (IFA dosing, ANC (Antenatal Care) schedules, immunization), refuses diagnostic overreach with a deterministic, machine-readable contract, sends closed-loop nudges for IFA compliance, and drafts supervisor reports from an audit trail — all without a single byte of PHI (Protected Health Information) leaving the sub-centre.
 
 **The differentiator.** The [Decision Boundary Card](#-decision-boundary-card) — a machine-readable specification of exactly what the model answers, refuses, and escalates. Not a vague "it will be safe" claim; a versioned contract with 16 answerable entries and 16 refusal triggers, verifiable in 5 minutes.
 
@@ -53,19 +53,20 @@
 - [Roadmap](#roadmap)
 - [Engineering Lineage](#engineering-lineage)
 - [Acknowledgments](#acknowledgments)
+- [Glossary](#glossary)
 - [License](#license)
 
 ---
 
 ## The Problem
 
-India's Auxiliary Nurse Midwife (ANM) is the frontline of maternal and child health for 5,000+ patients per sub-centre. She faces three compounding gaps:
+India's Auxiliary Nurse Midwife (ANM) is the frontline of maternal and child health for 3,000–5,000 patients per sub-centre. She faces three compounding gaps:
 
 | Gap | Reality |
 |-----|---------|
 | **Clinical isolation** | No doctor within reach for protocol questions — internet may be unreliable or absent |
-| **Diagnostic overreach risk** | Pressure to answer questions beyond her scope (BP interpretation, insulin dosing, bleeding assessment) creates liability |
-| **Administrative burden** | Mandatory HMIS / RCH-1 monthly reports must be hand-drafted from paper registers |
+| **Diagnostic overreach risk** | Pressure to answer questions beyond her scope (blood pressure interpretation, insulin dosing, bleeding assessment) creates liability |
+| **Administrative burden** | Mandatory HMIS (Health Management Information System) / RCH-1 (Reproductive and Child Health) monthly reports must be hand-drafted from paper registers |
 
 Previous tools either require connectivity, expose PHI to the cloud, or add data-entry burden. Sub-Centre Mind does none of those things.
 
@@ -77,9 +78,9 @@ A **local-first, offline-capable** clinical decision support system with five in
 
 | Component | What it does |
 |-----------|-------------|
-| **RAG Engine** | Hybrid FAISS + BM25 retrieval over 7 MoHFW/WHO guideline PDFs. Confidence gate: similarity ≥ 0.7 or no generation |
+| **RAG (Retrieval-Augmented Generation) Engine** | Hybrid FAISS + BM25 retrieval over 11 MoHFW/WHO guideline PDFs. Confidence gate: similarity ≥ 0.7 or no generation |
 | **Refusal Contract** | Deterministic tool-calling via Gemma 4's `/api/chat` function API — `refuse_and_escalate` fires for all diagnostic/prescriptive queries |
-| **Multilingual ASR** | Local Whisper (faster-whisper) with Hindi/Urdu disambiguation, phonetic normalisation for medical loan-words |
+| **Multilingual ASR (Automatic Speech Recognition)** | Local Whisper (faster-whisper) with Hindi/Urdu disambiguation, phonetic normalisation for medical loan-words |
 | **Nudge Engine** | Closed-loop state machine (SCHEDULED → SENT → CONFIRMED / ESCALATED), persisted locally |
 | **Audit → Report** | Append-only JSONL audit trail → aggregate stats → downloadable draft supervisor summary |
 
@@ -265,7 +266,7 @@ pytest tests/ -q
 | Tests | **60 passed, 1 skipped** |
 | Source modules | **12** (rag, audit, nudges, vision, voice, query_router) |
 | Decision Boundary Card entries | **16 answerable + 16 refusals** |
-| Corpus PDFs indexed | **7** (MoHFW + WHO) |
+| Corpus PDFs indexed | **11** (MoHFW + WHO) |
 | Gate 1 criteria | **4 / 4 passing** |
 | Warm query latency | **~3.3s** (≤12s target) |
 | Multilingual similarity (Hindi) | **0.782** (≥0.7 target) |
@@ -360,9 +361,9 @@ We provide grounded decision support for a single professional (the ANM). We do 
 
 See [`docs/NEXT.md`](docs/NEXT.md) for the full 25-task build checklist across 4 phases.
 
-**Phase 1 (Gate 1, May 5):** Complete ✅  
-**Phase 2:** Corpus expansion, Boundary Card v0.2 with clinical advisor review  
-**Phase 3:** Live WhatsApp transport layer for nudge delivery  
+**Phase 1 (Gate 1):** Complete ✅ — RAG, refusal contract, voice, vision, nudges, audit  
+**Phase 2:** Edge deployment via Cactus (phone-only, zero hardware cost) — see [ADR-0001](docs/adr/0001-runtime-architecture-edge-deployment.md)  
+**Phase 3:** Corpus expansion, Boundary Card v0.2, Unsloth fine-tuning  
 **Phase 4:** HMIS / RCH-1 monthly report auto-draft with source-linked figures
 
 ---
@@ -382,6 +383,34 @@ The core insight transfers exactly: *advice without follow-through accountabilit
 - **MoHFW** — maternal and child health protocols, ANC guidelines, immunization schedules
 - **WHO** — IFA supplementation guidelines, infant feeding recommendations
 - **NHSRC / NHM** — SBA training materials and operational guidelines
+
+---
+
+## Glossary
+
+| Abbreviation | Full form |
+|-------------|-----------|
+| **AAM** | Ayushman Arogya Mandir — upgraded sub-centre model under India's national health mission |
+| **ANC** | Antenatal Care — routine pregnancy check-ups |
+| **ANM** | Auxiliary Nurse Midwife — frontline health worker staffing sub-centres |
+| **ASR** | Automatic Speech Recognition — converts voice to text |
+| **BM25** | Best Matching 25 — keyword-based text retrieval algorithm |
+| **FAISS** | Facebook AI Similarity Search — vector similarity library |
+| **HMIS** | Health Management Information System — India's national health data reporting system |
+| **HNSW** | Hierarchical Navigable Small World — approximate nearest-neighbour graph index |
+| **IFA** | Iron and Folic Acid — standard supplement for pregnant women |
+| **IPHS** | Indian Public Health Standards — facility norms for sub-centres and hospitals |
+| **MO** | Medical Officer — the doctor to whom the ANM escalates clinical decisions |
+| **MoHFW** | Ministry of Health and Family Welfare — India's central health ministry |
+| **NCD** | Non-Communicable Disease — e.g. diabetes, hypertension |
+| **NHM** | National Health Mission — India's umbrella public health programme |
+| **NHSRC** | National Health Systems Resource Centre — technical support body under NHM |
+| **PHI** | Protected Health Information — any patient-identifiable data |
+| **RAG** | Retrieval-Augmented Generation — grounds LLM output in retrieved source documents |
+| **RCH** | Reproductive and Child Health — sub-programme and data register used by ANMs |
+| **RRF** | Reciprocal Rank Fusion — method for combining multiple ranked retrieval lists |
+| **SBA** | Skilled Birth Attendance — training programme for safe delivery practices |
+| **TT** | Tetanus Toxoid — vaccine given during pregnancy |
 
 ---
 

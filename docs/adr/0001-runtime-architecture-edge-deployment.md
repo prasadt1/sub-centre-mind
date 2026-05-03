@@ -7,9 +7,9 @@
 
 ## Context
 
-Sub-Centre Mind is clinical decision support for India's ~250,000 sub-centres, each managed by a single ANM (Auxiliary Nurse Midwife) responsible for 3,000–5,000 patients. The system must run **entirely on-device** — no PHI may leave the sub-centre.
+Sub-Centre Mind is clinical decision support for India's roughly **170,000 Sub-Centres** (now being upgraded to Ayushman Arogya Mandirs / AAMs), each serving 3,000–5,000 patients and staffed by at least one ANM (Auxiliary Nurse Midwife) — often the sole qualified health worker at the facility. The system must run **entirely on-device** — no PHI (Protected Health Information) may leave the sub-centre.
 
-The Gate 1 prototype (verified May 3, 2026) runs on a $200 mini-PC via Ollama. This works for judging and desktop demos, but the $200 CAPEX per sub-centre + sysadmin maintenance creates a barrier to adoption that undermines the product's mission. Government procurement in rural India is slow, underfunded, and prone to leakage; asking for 250,000 dedicated devices is a non-starter.
+The Gate 1 prototype (verified May 3, 2026) runs on a $200 mini-PC via Ollama. This works for judging and desktop demos, but the $200 CAPEX per sub-centre + sysadmin maintenance creates a barrier to adoption that undermines the product's mission. Government procurement in rural India is slow, underfunded, and prone to leakage; asking for 170,000 dedicated devices is a non-starter.
 
 The Gemma 4 Good Hackathon awards separate **Special Technology Track** prizes ($10K each) for Ollama, LiteRT, Cactus, llama.cpp, and Unsloth — meaning architecture choices directly affect prize eligibility.
 
@@ -180,8 +180,8 @@ At any point during Phases 2–4, if Cactus integration hits a blocker (retrieva
 |-------|----------|----------|
 | 1 sub-centre | $200 (mini-PC) | $0 (ANM's phone) |
 | 1,000 sub-centres | $200,000 | $0 |
-| 250,000 sub-centres | $50,000,000 | $0 |
-| Annual maintenance (est.) | $25/device/year × 250K = $6.25M | App update push = ~$0 |
+| 170,000 sub-centres (national) | $34,000,000 | $0 |
+| Annual maintenance (est.) | $25/device/year × 170K = $4.25M | App update push = ~$0 |
 
 The cost difference is not marginal. It is the difference between a fundable pilot and a logistically impossible national rollout.
 
