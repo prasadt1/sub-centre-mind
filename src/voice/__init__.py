@@ -10,4 +10,5 @@ from .asr import (  # noqa: F401
     ASRUnavailable,
     TranscriptionResult,
     transcribe,
+    transcribe_with_hindi_fallback,
 )
