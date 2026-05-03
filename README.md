@@ -116,10 +116,30 @@ python src/rag/ingest.py  # Index MoHFW PDFs
 python src/rag/query.py "गर्भवती महिलांसाठी IFA डोस काय आहे?"  # Marathi query
 ```
 
-### Run Refusal Tests
+### Demo UI (Streamlit, all local)
 
 ```bash
-pytest tests/test_refusal.py -v
+# Warm Ollama once for fast first-token
+bash scripts/warmup.sh
+
+# Launch the demo (opens http://127.0.0.1:8501)
+bash scripts/run_app.sh
+```
+
+Four tabs:
+
+- **Ask** — protocol Q&A with retrieval, confidence gate, citations, optional tool-calling round-trip; **voice input** (Hindi/Marathi/English) via local Whisper
+- **Photo** — Gemma 4 vision on bounded use cases: printed protocol OCR, medicine pack (always escalates), ANC register row → draft fields
+- **Nudges** — closed-loop follow-up state machine, persisted to `data/nudges/store.json` (no live WhatsApp/SMS in v1)
+- **Report** — audit JSONL → aggregate stats → draft supervisor summary (optional Gemma narrative)
+
+### Tests & audit draft report
+
+```bash
+pytest tests/ -q
+python scripts/report_from_logs.py --log data/logs/sample_events.jsonl
+# Optional: append JSONL audit lines when smoke-testing RAG
+SCM_AUDIT_LOG=data/logs/dev_events.jsonl python scripts/rag_smoke.py "IFA schedule pregnancy"
 ```
 
 ## Project Structure
@@ -127,15 +147,22 @@ pytest tests/test_refusal.py -v
 ```
 sub-centre-mind/
 ├── src/
-│   ├── rag/              # RAG pipeline (ingest, query, retrieval)
-│   └── nudges/           # WhatsApp nudge engine
+│   ├── rag/              # RAG pipeline (ingest, query, retrieval, gate, generate)
+│   ├── audit/            # JSONL audit schema + aggregate / draft helpers
+│   ├── nudges/           # State machine + JSON store + Dispatcher Protocol
+│   ├── vision/           # Gemma 4 vision client (bounded clinical-adjacent prompts)
+│   ├── voice/            # Local Whisper ASR (faster-whisper, lazy)
+│   └── query_router.py   # Retrieval-injected /api/chat with Gate 1 tools
+├── app/
+│   └── streamlit_app.py  # Local 3-tab demo UI (Ask / Nudges / Report)
 ├── data/
-│   └── health-corpus/    # MoHFW/WHO PDFs
-├── tests/                # Pytest suite
-├── docs/
-│   ├── NEXT.md          # Build checklist
-│   └── HANDOFF-CLI.md   # Claude Code bootstrap
-├── scripts/              # Utility scripts
+│   ├── health-corpus/    # MoHFW/WHO PDFs
+│   ├── index/            # FAISS + BM25 + chunks.json
+│   ├── logs/             # Audit JSONL (sample_events.jsonl tracked)
+│   └── nudges/           # Persistent nudge state (gitignored)
+├── tests/                # Pytest suite (gate, nudges, store, dispatcher, report, integration)
+├── docs/                 # CORPUS, ARCHITECTURE, NEXT, writeup-qa-hardquestions, etc.
+├── scripts/              # ask, rag_smoke, g1_checks, run_app, run_nudges, warmup, report_from_logs
 ├── boundary_card.json    # Decision Boundary Card
 └── requirements.txt
 ```

@@ -1,0 +1,4 @@
+{"ts_iso": "2026-05-01T09:00:00Z", "event_id": "e1-demo", "kind": "rag_answer", "detail": {"query_lang": "en", "top_sim": 0.82, "confidence_blocked": false, "ref": "synthetic"}}
+{"ts_iso": "2026-05-01T10:15:00Z", "event_id": "e2-demo", "kind": "confidence_gate_blocked", "detail": {"top_sim": 0.31, "ref": "synthetic"}}
+{"ts_iso": "2026-05-01T11:00:00Z", "event_id": "e3-demo", "kind": "tool_refusal", "detail": {"urgency": "high", "ref": "synthetic"}}
+{"ts_iso": "2026-05-02T08:30:00Z", "event_id": "e4-demo", "kind": "rag_answer", "detail": {"query_lang": "mr", "top_sim": 0.78, "confidence_blocked": false, "ref": "synthetic"}}

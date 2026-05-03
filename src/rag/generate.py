@@ -14,6 +14,7 @@ if _SRC_DIR not in sys.path:
 
 import requests
 
+from rag.gate import should_skip_generation
 from rag.intent import SupplementIntent, detect_supplement_intent
 from rag.query import RetrievedChunk, format_citations, retrieve
 
@@ -75,6 +76,9 @@ def _build_prompt(user_query: str, chunks: Sequence[RetrievedChunk]) -> str:
     )
 
 
+DEFAULT_NUM_PREDICT = 220
+
+
 def generate_answer(
     user_query: str,
     *,
@@ -82,15 +86,16 @@ def generate_answer(
     model: str = "gemma4:latest",
     think: bool = False,
     top_k: int = 5,
-    num_predict: int = 220,
+    num_predict: int | None = None,
     temperature: float = 0.1,
 ) -> RAGAnswer:
+    if num_predict is None:
+        num_predict = int(os.environ.get("SCM_NUM_PREDICT", str(DEFAULT_NUM_PREDICT)))
     retrieved = retrieve(user_query, index_dir=index_dir, top_k=top_k)
 
     gate_on = os.environ.get("SCM_CONFIDENCE_GATE", "1").strip().lower() not in ("0", "false", "no")
     min_sim = float(os.environ.get("SCM_RETRIEVAL_MIN_SIM", str(DEFAULT_MIN_SIM)))
-    best_sim = retrieved[0].semantic_score if retrieved else 0.0
-    if gate_on and (not retrieved or best_sim < min_sim):
+    if should_skip_generation(retrieved, gate_on=gate_on, min_sim=min_sim):
         return RAGAnswer(
             answer=_low_confidence_answer(),
             citations="(generation skipped: top semantic similarity below threshold)",
@@ -108,7 +113,11 @@ def generate_answer(
         "options": {"num_predict": num_predict, "temperature": temperature},
     }
 
-    resp = requests.post("http://localhost:11434/api/generate", json=payload, timeout=60)
+    timeout_s = float(os.environ.get("SCM_OLLAMA_TIMEOUT", "180"))
+    ollama_url = os.environ.get(
+        "OLLAMA_GENERATE_URL", "http://localhost:11434/api/generate"
+    )
+    resp = requests.post(ollama_url, json=payload, timeout=timeout_s)
     resp.raise_for_status()
     data = resp.json()
 

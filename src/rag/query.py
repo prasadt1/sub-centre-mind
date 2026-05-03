@@ -56,6 +56,39 @@ def _load_bm25(index_dir: Path):
         return pickle.load(f)
 
 
+# Cache heavy artifacts so subsequent retrieve() calls don't re-load
+# SentenceTransformer / FAISS / chunks / BM25 from disk.
+_ARTIFACTS_CACHE: Dict[tuple, tuple] = {}
+_BM25_CACHE: Dict[str, object] = {}
+
+
+def _get_artifacts(index_dir: Path, embedding_model: str):
+    key = (str(Path(index_dir).resolve()), embedding_model)
+    cached = _ARTIFACTS_CACHE.get(key)
+    if cached is not None:
+        return cached
+    model = SentenceTransformer(embedding_model, device="cpu")
+    index = faiss.read_index(str(index_dir / "faiss.index"))
+    chunks = _load_chunks(index_dir)
+    _ARTIFACTS_CACHE[key] = (model, index, chunks)
+    return _ARTIFACTS_CACHE[key]
+
+
+def _get_bm25_cached(index_dir: Path):
+    key = str(Path(index_dir).resolve())
+    if key in _BM25_CACHE:
+        return _BM25_CACHE[key]
+    bm25 = _load_bm25(index_dir)
+    _BM25_CACHE[key] = bm25
+    return bm25
+
+
+def clear_caches() -> None:
+    """Drop cached embedder/index/BM25 (used by tests)."""
+    _ARTIFACTS_CACHE.clear()
+    _BM25_CACHE.clear()
+
+
 def _semantic_sim_for_idx(index, idx: int, q_emb_row: np.ndarray) -> float:
     vec = np.asarray(index.reconstruct(int(idx)), dtype=np.float32)
     return float(np.dot(vec, q_emb_row.astype(np.float32)))
@@ -102,15 +135,13 @@ def retrieve(
         else os.environ.get("SCM_INTENT_RERANK", "1").strip().lower() not in ("0", "false", "no")
     )
 
-    model = SentenceTransformer(embedding_model, device="cpu")
-    index = faiss.read_index(str(index_path))
-    chunks = _load_chunks(index_dir)
+    model, index, chunks = _get_artifacts(index_dir, embedding_model)
 
     ntotal = int(index.ntotal)
     intent = detect_supplement_intent(query) if use_rerank else SupplementIntent.GENERIC
 
     use_hybrid = os.environ.get("SCM_HYBRID", "1").strip().lower() not in ("0", "false", "no")
-    bm25 = _load_bm25(index_dir) if use_hybrid else None
+    bm25 = _get_bm25_cached(index_dir) if use_hybrid else None
 
     # Larger pool so rerank can rescue strong cue chunks (e.g. MCP IFA bullets) that embed slightly lower.
     default_pool = min(ntotal, max(top_k * 10, 48))

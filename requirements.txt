@@ -26,3 +26,14 @@ pytest-asyncio==0.21.0
 # Utilities
 python-dotenv==1.0.0
 pydantic==2.5.0
+requests>=2.28.0
+
+# Demo UI (local-first, single command)
+streamlit>=1.30
+
+# Local ASR (Hindi/Marathi/English voice input — Phase G)
+# Note: faster-whisper installs onnxruntime + ctranslate2; CPU-only is fine.
+faster-whisper>=1.0.0
+
+# Vision: Pillow for client-side image preprocessing in the demo
+Pillow>=10.0.0

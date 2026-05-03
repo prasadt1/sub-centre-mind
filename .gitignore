@@ -18,6 +18,16 @@ data/health-corpus/**/*.mp3
 data/health-corpus/**/*.wav
 data/health-corpus/**/*.m4a
 
+# Local audit logs (keep sample_events.jsonl tracked via negation)
+data/logs/*.jsonl
+!data/logs/sample_events.jsonl
+
+# Local nudge state (per-machine, contains pseudonyms)
+data/nudges/
+
+# Streamlit local cache
+.streamlit/
+
 # Internal documentation (not for public repo)
 docs/GATE1-BLOCKER.md
 docs/GATE1-SOLUTION.md

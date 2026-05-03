@@ -230,14 +230,62 @@
       "escalation_message": "ANM query: Positive urine protein requires assessment"
     }
   ],
+  "vision_use_cases": [
+    {
+      "use_case": "printed_text",
+      "label": "Printed protocol / poster — read text",
+      "answerable": true,
+      "behaviour": "OCR the visible text verbatim. No interpretation. Optionally feed extracted text into RAG to surface grounded protocol citations.",
+      "boundary_note": "Vision OCR only. Text returned is verbatim; no clinical interpretation."
+    },
+    {
+      "use_case": "medicine_packet",
+      "label": "Medicine packet — read brand & dose",
+      "answerable": false,
+      "always_escalate": true,
+      "behaviour": "Extract visible brand / generic / dose strength as a list. Always end with: 'Decision required from Medical Officer.'",
+      "boundary_note": "Sub-Centre Mind does not authorize dosing or administration."
+    },
+    {
+      "use_case": "register_row",
+      "label": "ANC / RCH register row — extract fields",
+      "answerable": "draft_only",
+      "behaviour": "Extract visible 'field: value' pairs as a draft. ANM must verify against the original register before any use.",
+      "boundary_note": "Draft fields only — no clinical interpretation, no inference of diagnoses."
+    }
+  ],
+  "vision_refusals": [
+    {
+      "use_case": "diagnostic_image",
+      "examples": ["wound", "rash", "skin lesion", "ECG strip", "ultrasound", "X-ray", "fundus", "eye image"],
+      "behaviour": "Refuse — escalate to Medical Officer.",
+      "reason": "Diagnostic interpretation of medical images is outside the boundary of Sub-Centre Mind. ANM must escalate physical examination findings to a qualified clinician."
+    },
+    {
+      "use_case": "patient_face_or_body",
+      "examples": ["patient face", "newborn body", "pregnancy bump", "perineum"],
+      "behaviour": "Refuse — privacy / dignity boundary.",
+      "reason": "Photos of patients themselves are not handled. Use printed protocol pages, medicine packs, or register rows only."
+    }
+  ],
   "metadata": {
     "total_answerable": 16,
     "total_refusals": 16,
+    "total_vision_use_cases": 3,
+    "total_vision_refusals": 2,
     "categories": {
       "answerable": ["protocol"],
-      "refusals": ["diagnostic", "prescriptive"]
+      "refusals": ["diagnostic", "prescriptive"],
+      "vision_answerable": ["printed_text", "register_row"],
+      "vision_advisory_only": ["medicine_packet"],
+      "vision_refusals": ["diagnostic_image", "patient_face_or_body"]
     },
     "urgency_levels": ["medium", "high", "critical"],
+    "modalities": ["text", "vision"],
+    "asr": {
+      "engine": "faster-whisper (local)",
+      "rationale": "Ollama 0.22.x lists Gemma 4 audio capability but does not yet expose it via a stable API field; local Whisper preserves the all-on-device story."
+    },
     "sources": [
       "MoHFW ANC guidelines",
       "MoHFW immunization schedule",
